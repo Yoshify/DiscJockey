@@ -90,10 +90,7 @@ namespace DiscJockey.Patches
                     if (__instance.isPlayingMusic)
                     {
                         DiscJockeyPlugin.LogInfo($"BoomboxItemPatches<StartMusicPatch>: Stop Music requested");
-                        __instance.isBeingUsed = false;
-                        __instance.isPlayingMusic = false;
-                        __instance.boomboxAudio.Stop();
-                        __instance.boomboxAudio.PlayOneShot(__instance.stopAudios[UnityEngine.Random.Range(0, __instance.stopAudios.Length)]);
+                        DiscJockeyAudioManager.RequestStopTrack();
                     }
                     else
                     {
@@ -109,7 +106,6 @@ namespace DiscJockey.Patches
                             {
                                 DiscJockeyPlugin.LogInfo($"BoomboxItemPatches<StartMusicPatch>: Requesting random track");
                                 var randomTrack = DiscJockeyAudioManager.TrackList.GetRandomTrack();
-                                __instance.boomboxAudio.clip = randomTrack.AudioClip;
                                 DiscJockeyAudioManager.RequestPlayTrack(randomTrack);
                             }
                         }
@@ -117,23 +113,14 @@ namespace DiscJockey.Patches
                         {
                             DiscJockeyPlugin.LogInfo($"BoomboxItemPatches<StartMusicPatch>: Requesting random track");
                             var randomTrack = DiscJockeyAudioManager.TrackList.GetRandomTrack();
-                            __instance.boomboxAudio.clip = randomTrack.AudioClip;
                             DiscJockeyAudioManager.RequestPlayTrack(randomTrack);
                         }
-
-                        __instance.boomboxAudio.pitch = 1f;
-                        __instance.boomboxAudio.Play();
-                        __instance.isBeingUsed = true;
-                        __instance.isPlayingMusic = true;
                     }
                 }
                 else
                 {
                     DiscJockeyPlugin.LogInfo($"BoomboxItem<StartMusic>: Stop Music requested");
-                    __instance.isBeingUsed = false;
-                    __instance.isPlayingMusic = false;
-                    __instance.boomboxAudio.Stop();
-                    __instance.boomboxAudio.PlayOneShot(__instance.stopAudios[UnityEngine.Random.Range(0, __instance.stopAudios.Length)]);
+                    DiscJockeyAudioManager.RequestStopTrack();
                 }
                 
             }
