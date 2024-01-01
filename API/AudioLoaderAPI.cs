@@ -73,34 +73,6 @@ namespace DiscJockey.API
         public static string GetUniqueTaskId() => Guid.NewGuid().ToString();
 
         #region Disk API
-
-        // public static void LoadAudioClipsFromDirectory(string directory)
-        // {
-        //     audioLoaderCoroutineHelper.StartCoroutine(LoadAudioClipsFromDirectoryRoutine(directory));
-        // }
-
-        // private static IEnumerator LoadAudioClipsFromDirectoryRoutine(string directory)
-        // {
-        //     DiscJockeyPlugin.LogInfo("LoadAudioClipsFromDirectoryRoutine called");
-        //     if (!Directory.Exists(directory))
-        //     {
-        //         OnLoadAllAudioFromDirectoryError?.Invoke($"Cannot load from {directory} as it doesn't exist");
-        //         yield break;
-        //     }
-        //
-        //     var files = Directory.GetFiles(directory);
-        //
-        //     if(files.Length == 0)
-        //     {
-        //         OnLoadAllAudioFromDirectoryError?.Invoke($"Found no files to load in {directory}");
-        //         yield break;
-        //     }
-        //
-        //     foreach(var file in files)
-        //     {
-        //         yield return audioLoaderCoroutineHelper.StartCoroutine(LoadAudioClipFromDiskRoutine(file));
-        //     }
-        // }
         
         public static async void LoadAudioClipsFromDirectory(string directory)
         {
@@ -123,54 +95,11 @@ namespace DiscJockey.API
 
             foreach(var file in files)
             {
-                //Task.WaitAll()
                 taskList.Add(LoadAudioClipFromDisk(file, GetUniqueTaskId()));
-                //yield return audioLoaderCoroutineHelper.StartCoroutine(LoadAudioClipFromDiskRoutine(file));
             }
 
             await Task.WhenAll(taskList.ToArray());
         }
-
-        // public static void LoadAudioClipFromDisk(string filePath)
-        // {
-        //     audioLoaderCoroutineHelper.StartCoroutine(LoadAudioClipFromDiskRoutine(filePath));
-        // }
-
-        // private static IEnumerator LoadAudioClipFromDiskRoutine(string filePath)
-        // {
-        //     OnLoadAudioStarted?.Invoke(filePath);
-        //     
-        //     if (!AudioUtils.IsValidAudioType(filePath))
-        //     {
-        //         OnLoadAudioError?.Invoke($"Unknown or invalid audio file {filePath}");
-        //         yield break;
-        //     }
-        //     
-        //     using (var audioRequest = UnityWebRequestMultimedia.GetAudioClip(filePath, AudioUtils.GetAudioType(filePath)))
-        //     {
-        //         ((DownloadHandlerAudioClip)audioRequest.downloadHandler).compressed = true;
-        //
-        //         yield return audioRequest.SendWebRequest();
-        //         
-        //         if (!string.IsNullOrEmpty(audioRequest.error))
-        //         {
-        //             OnLoadAudioError?.Invoke($"Failed to load AudioClip at {filePath}\n{audioRequest.error}");
-        //         }
-        //         else
-        //         {
-        //             var audioClip = DownloadHandlerAudioClip.GetContent(audioRequest);
-        //             if (audioClip && audioClip.loadState == AudioDataLoadState.Loaded)
-        //             {
-        //                 audioClip.name = AudioUtils.CleanAudioFilename(filePath);
-        //                 OnLoadAudioCompleted?.Invoke(audioClip);
-        //             }
-        //             else
-        //             {
-        //                 OnLoadAudioError?.Invoke($"Failed to load AudioClip at {filePath}");
-        //             }
-        //         }
-        //     }
-        // }
 
         public static void ClearDownloadCache()
         {
