@@ -11,12 +11,12 @@ namespace DiscJockey.Utils
             !StartOfRound.Instance.ClientPlayerList.TryGetValue(playerId, out var playerIndex) ? "UNKNOWN" : StartOfRound.Instance.allPlayerScripts[playerIndex].playerUsername;
         
         public const string DiscJockeyNameColour = "#1565C0";
-        public const string StandardMessageColour = "#FFFF00";
-        public const string PlayerNameColour = "#7069ff";
+        public const string StandardMessageColour = "#FFFFFF";
+        public const string PlayerNameColour = "#388E3C";
         
         public static void LogDiscJockeyMessageToServer(string message)
         {
-            var formattedMessage = $"{DiscJockeyFormattedName}: {GetColourFormattedText(message, StandardMessageColour)}";
+            var formattedMessage = $"{DiscJockeyFormattedName}{GetColourFormattedText($"$: {message}", StandardMessageColour)}";
             HUDManager.Instance.AddTextToChatOnServer(formattedMessage);
         }
 
