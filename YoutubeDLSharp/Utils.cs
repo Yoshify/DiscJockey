@@ -7,6 +7,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Runtime.Serialization;
+using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using YoutubeDLSharp.Helpers;
@@ -91,6 +92,34 @@ namespace YoutubeDLSharp
         }
 
 #region Download Helpers
+
+        private static Dictionary<OSVersion, FFBinaryDownloadMetadata> FfmpegDownloads =
+            new Dictionary<OSVersion, FFBinaryDownloadMetadata>
+            {
+                { OSVersion.Windows, new FFBinaryDownloadMetadata("https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffmpeg-6.1-win-64.zip", "04807e036638e2ad95f42dc8f7ec426d") },
+                { OSVersion.OSX, new FFBinaryDownloadMetadata("https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffmpeg-6.1-macos-64.zip", "3442106c85dea60302ae3a972494327d") },
+                { OSVersion.Linux, new FFBinaryDownloadMetadata("https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffmpeg-6.1-linux-64.zip", "bf25e58a1799882782a5106b104e2673") }
+            };
+        
+        private static Dictionary<OSVersion, FFBinaryDownloadMetadata> FfprobeDownloads =
+            new Dictionary<OSVersion, FFBinaryDownloadMetadata>
+            {
+                { OSVersion.Windows, new FFBinaryDownloadMetadata("https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffprobe-6.1-win-64.zip", "412447f53830826bf91406c88f72d88a") },
+                { OSVersion.OSX, new FFBinaryDownloadMetadata("https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffprobe-6.1-macos-64.zip", "ce0d21460e432a84398fccaf46b89327") },
+                { OSVersion.Linux, new FFBinaryDownloadMetadata("https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffprobe-6.1-linux-64.zip", "0dff2a6d2410a9c5d98684a087473c54") }
+            };
+
+        public struct FFBinaryDownloadMetadata
+        {
+            public string URL;
+            public string ExpectedMD5Checksum;
+
+            public FFBinaryDownloadMetadata(string url, string expectedMD5Checksum)
+            {
+                URL = url;
+                ExpectedMD5Checksum = expectedMD5Checksum;
+            }
+        }
 
         public static string YtDlpBinaryName => GetYtDlpBinaryName();
         public static string FfmpegBinaryName => GetFfmpegBinaryName();
@@ -197,44 +226,38 @@ namespace YoutubeDLSharp
         {
             await FFDownloader(directoryPath, FFmpegApi.BinaryType.FFprobe);
         }
-
         
-
         private static async Task FFDownloader(string directoryPath = "", FFmpegApi.BinaryType binary = FFmpegApi.BinaryType.FFmpeg)
         {
             if (string.IsNullOrEmpty(directoryPath)) { directoryPath = Directory.GetCurrentDirectory(); }
-            const string FFMPEG_API_URL = "https://ffbinaries.com/api/v1/version/latest";
-
-            var ffmpegVersion = JsonConvert.DeserializeObject<FFmpegApi.Root>(await (await _client.GetAsync(FFMPEG_API_URL)).Content.ReadAsStringAsync());
-
-            FFmpegApi.OsBinVersion ffContent;
-            switch (OSHelper.GetOSVersion())
+            
+            var os = OSHelper.GetOSVersion();
+            var downloadMetadata = binary == FFmpegApi.BinaryType.FFmpeg ? FfmpegDownloads[os] : FfprobeDownloads[os];
+            var dataBytes = await DownloadFileBytesAsync(downloadMetadata.URL);
+            using (var md5 = MD5.Create())
             {
-                case OSVersion.Windows:
-                    ffContent = ffmpegVersion?.Bin.Windows64;
-                    break;
-                case OSVersion.OSX:
-                    ffContent = ffmpegVersion?.Bin.Osx64;
-                    break;
-                case OSVersion.Linux:
-                    ffContent= ffmpegVersion?.Bin.Linux64;
-                    break;
-                default:
-                    throw new NotImplementedException("Your OS isn't supported");
-            }
+                var checksumBytes = md5.ComputeHash(dataBytes);
+                var actualChecksum = BitConverter.ToString(checksumBytes).Replace("-", string.Empty);
 
-            string downloadUrl = binary == FFmpegApi.BinaryType.FFmpeg ? ffContent.Ffmpeg : ffContent.Ffprobe;
-            var dataBytes = await DownloadFileBytesAsync(downloadUrl);
-            using (var stream = new MemoryStream(dataBytes))
-            {
-                using (var archive = new ZipArchive(stream, ZipArchiveMode.Read))
+                if (string.Equals(actualChecksum, downloadMetadata.ExpectedMD5Checksum, StringComparison.OrdinalIgnoreCase))
                 {
-                    if (archive.Entries.Count > 0)
+                    using (var stream = new MemoryStream(dataBytes))
                     {
-                        archive.Entries[0].ExtractToFile(Path.Combine(directoryPath, archive.Entries[0].FullName), true);
-                    }
-                }                
-            };            
+                        using (var archive = new ZipArchive(stream, ZipArchiveMode.Read))
+                        {
+                            if (archive.Entries.Count > 0)
+                            {
+                                archive.Entries[0].ExtractToFile(Path.Combine(directoryPath, archive.Entries[0].FullName), true);
+                            }
+                        }                
+                    };
+                }
+                else
+                {
+                    throw new Exception(
+                        $"Invalid file checksum at {downloadMetadata.URL} - expected {downloadMetadata.ExpectedMD5Checksum}, got {actualChecksum}");
+                }
+            }
         }
 
         private static async Task<byte[]> DownloadFileBytesAsync(string uri)
