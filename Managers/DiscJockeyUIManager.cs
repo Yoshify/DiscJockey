@@ -72,6 +72,7 @@ namespace DiscJockey.Managers
             DiscJockeyNetworkManager.OnStopTrackRequestReceived += OnStopTrack;
             DiscJockeyNetworkManager.OnPlayerReceivedDownloadTask += AddDownloadingTrackButton;
             GameNetworkManagerPatches.OnDisconnect += OnDisconnect;
+            DiscJockeyAudioManager.TrackList.OnTracklistSorted += SortTrackList;
         }
 
         public void UnregisterEventListeners()
@@ -81,6 +82,7 @@ namespace DiscJockey.Managers
             DiscJockeyNetworkManager.OnStopTrackRequestReceived -= OnStopTrack;
             DiscJockeyNetworkManager.OnPlayerReceivedDownloadTask -= AddDownloadingTrackButton;
             GameNetworkManagerPatches.OnDisconnect -= OnDisconnect;
+            DiscJockeyAudioManager.TrackList.OnTracklistSorted -= SortTrackList;
         }
 
         private void OnDisconnect()
@@ -232,14 +234,11 @@ namespace DiscJockey.Managers
                 trackListButtonInstances.Where(button => !button.IsReadyForSorting).ToList();
             var buttonsReadyForSorting =
                 trackListButtonInstances.Where(button => button.IsReadyForSorting).ToList();
-            
-            buttonsReadyForSorting.Sort((a, b) => string.CompareOrdinal(a.Track.Metadata.Name, b.Track.Metadata.Name));
 
-            for (var i = 0; i < buttonsReadyForSorting.Count; i++)
+            foreach (var button in buttonsReadyForSorting)
             {
-                var button = buttonsReadyForSorting[i];
-                button.transform.SetSiblingIndex(i);
-                button.SetSortIndex(i);
+                button.transform.SetSiblingIndex(button.Track.Metadata.Index);
+                button.SetSortIndex(button.Track.Metadata.Index);
             }
 
             foreach (var button in buttonsNotReadyForSorting)

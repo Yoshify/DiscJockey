@@ -9,6 +9,18 @@ namespace DiscJockey.Data
     public class TrackList
     {
         private readonly List<Track> _trackList = new List<Track>();
+
+        public event Action OnTracklistSorted;
+
+        private void SortTracklist()
+        {
+            _trackList.Sort((a, b) => string.CompareOrdinal(a.Metadata.Name, b.Metadata.Name));
+            for (var i = 0; i < _trackList.Count; i++)
+            {
+                _trackList[i].Metadata.Index = i;
+            }
+            OnTracklistSorted?.Invoke();
+        }
         
         private int GetValidTrackIndex(int trackIndex)
         {
@@ -46,6 +58,7 @@ namespace DiscJockey.Data
                     audioClip.name, _trackList.Count, audioClip.length
                 ));
             _trackList.Add(track);
+            SortTracklist();
             return track;
         }
 
