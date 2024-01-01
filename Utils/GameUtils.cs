@@ -7,7 +7,8 @@ namespace DiscJockey.Utils
     {
         public static List<ulong> ConnectedPlayerIDs => StartOfRound.Instance.ClientPlayerList.Keys.ToList();
 
-        public static string GetPlayerName(ulong playerId) => (int)playerId > StartOfRound.Instance.allPlayerScripts.Length ? "UNKNOWN" : StartOfRound.Instance.allPlayerScripts[(int)playerId].playerUsername;
+        public static string GetPlayerName(ulong playerId) =>
+            !StartOfRound.Instance.ClientPlayerList.TryGetValue(playerId, out var playerIndex) ? "UNKNOWN" : StartOfRound.Instance.allPlayerScripts[playerIndex].playerUsername;
         
         public const string DiscJockeyNameColour = "#1565C0";
         public const string StandardMessageColour = "#FFFF00";
