@@ -99,6 +99,7 @@ namespace DiscJockey.API
             }
 
             await Task.WhenAll(taskList.ToArray());
+            OnLoadAllAudioFromDirectoryCompleted?.Invoke();
         }
 
         public static void ClearDownloadCache()
