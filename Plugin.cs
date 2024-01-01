@@ -23,7 +23,7 @@ namespace DiscJockey
     {
         public const string ModID = "Yoshify.DiscJockey";
         public const string ModName = "DiscJockey";
-        public const string ModVersion = "1.0.0";
+        public const string ModVersion = "1.0.1";
         
         public static readonly string CustomSongsDirectory = Path.Combine(Paths.PluginPath, "Yoshify-DiscJockey", "Custom Songs");
         public static readonly string DownloadedAudioDirectory = Path.Combine(Paths.PluginPath, "Yoshify-DiscJockey", "Download Cache");
