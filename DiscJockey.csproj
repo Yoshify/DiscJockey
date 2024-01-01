@@ -1,0 +1,225 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{2DB25346-4961-4444-8472-182552D78C66}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>DiscJockey</RootNamespace>
+    <AssemblyName>DiscJockey</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>portable</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>F:\Games\Steam\steamapps\common\Lethal Company\BepInEx.old\core\0Harmony.dll</HintPath>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>F:\Games\Steam\steamapps\common\Lethal Company\Lethal Company_Data\Managed\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="BepInEx">
+      <HintPath>F:\Games\Steam\steamapps\common\Lethal Company\BepInEx.old\core\BepInEx.dll</HintPath>
+    </Reference>
+    <Reference Include="mscorlib" />
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.IO, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>packages\System.IO.4.3.0\lib\net462\System.IO.dll</HintPath>
+    </Reference>
+    <Reference Include="System.IO.Compression, Version=4.1.2.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>packages\System.IO.Compression.4.3.0\lib\net46\System.IO.Compression.dll</HintPath>
+    </Reference>
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.IO.Compression.ZipFile, Version=4.0.2.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>packages\System.IO.Compression.ZipFile.4.3.0\lib\net46\System.IO.Compression.ZipFile.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net.Http, Version=4.1.1.3, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>packages\System.Net.Http.4.3.4\lib\net46\System.Net.Http.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>packages\System.Runtime.4.3.0\lib\net462\System.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Runtime.Serialization.Primitives, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>packages\System.Runtime.Serialization.Primitives.4.1.1\lib\net46\System.Runtime.Serialization.Primitives.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.Algorithms, Version=4.2.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>packages\System.Security.Cryptography.Algorithms.4.3.0\lib\net463\System.Security.Cryptography.Algorithms.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.Encoding, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>packages\System.Security.Cryptography.Encoding.4.3.0\lib\net46\System.Security.Cryptography.Encoding.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.Primitives, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>packages\System.Security.Cryptography.Primitives.4.3.0\lib\net46\System.Security.Cryptography.Primitives.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.X509Certificates, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>packages\System.Security.Cryptography.X509Certificates.4.3.0\lib\net461\System.Security.Cryptography.X509Certificates.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>packages\System.ValueTuple.4.5.0\lib\net47\System.ValueTuple.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="Unity.InputSystem">
+      <HintPath>F:\Games\Steam\steamapps\common\Lethal Company\Lethal Company_Data\Managed\Unity.InputSystem.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Netcode.Runtime, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>F:\Games\Steam\steamapps\common\Lethal Company\Lethal Company_Data\Managed\Unity.Netcode.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.TextMeshPro, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>F:\Games\Steam\steamapps\common\Lethal Company\Lethal Company_Data\Managed\Unity.TextMeshPro.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>F:\Games\Steam\steamapps\common\Lethal Company\Lethal Company_Data\Managed\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.AssetBundleModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>F:\Games\Steam\steamapps\common\Lethal Company\Lethal Company_Data\Managed\UnityEngine.AssetBundleModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.AudioModule">
+      <HintPath>F:\Games\Steam\steamapps\common\Lethal Company\Lethal Company_Data\Managed\UnityEngine.AudioModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>F:\Games\Steam\steamapps\common\Lethal Company\Lethal Company_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>F:\Games\Steam\steamapps\common\Lethal Company\Lethal Company_Data\Managed\UnityEngine.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UIElementsModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>F:\Games\Steam\steamapps\common\Lethal Company\Lethal Company_Data\Managed\UnityEngine.UIElementsModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UIModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>F:\Games\Steam\steamapps\common\Lethal Company\Lethal Company_Data\Managed\UnityEngine.UIModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UnityWebRequestAudioModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>F:\Games\Steam\steamapps\common\Lethal Company\Lethal Company_Data\Managed\UnityEngine.UnityWebRequestAudioModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UnityWebRequestModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>F:\Games\Steam\steamapps\common\Lethal Company\Lethal Company_Data\Managed\UnityEngine.UnityWebRequestModule.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="API\AudioLoaderAPI.cs" />
+    <Compile Include="Data\NetworkedConfig.cs" />
+    <Compile Include="DiscJockeyConfig.cs" />
+    <Compile Include="Data\BoomboxMetadata.cs" />
+    <Compile Include="Data\Track.cs" />
+    <Compile Include="Data\TrackList.cs" />
+    <Compile Include="Data\TrackMetadata.cs" />
+    <Compile Include="Data\TrackListButton.cs" />
+    <Compile Include="Data\TrackMode.cs" />
+    <Compile Include="Managers\DiscJockeyAudioManager.cs" />
+    <Compile Include="Managers\DiscJockeyUIManager.cs" />
+    <Compile Include="Managers\DiscJockeyBoomboxManager.cs" />
+    <Compile Include="Managers\DiscJockeyInputManager.cs" />
+    <Compile Include="Managers\DiscJockeyNetworkManager.cs" />
+    <Compile Include="Patches\BoomboxItemPatches.cs" />
+    <Compile Include="Patches\GrabbableObjectPatches.cs" />
+    <Compile Include="Patches\GameNetworkManagerPatches.cs" />
+    <Compile Include="Patches\PlayerControllerBPatches.cs" />
+    <Compile Include="Patches\StartOfRoundPatches.cs" />
+    <Compile Include="Plugin.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utils\AssetUtils.cs" />
+    <Compile Include="Utils\AudioUtils.cs" />
+    <Compile Include="Utils\BoomboxExtensions.cs" />
+    <Compile Include="Utils\GameUtils.cs" />
+    <Compile Include="Utils\LocalPlayerHelper.cs" />
+    <Compile Include="Utils\AsyncUnityOps.cs" />
+    <Compile Include="YoutubeDLSharp\Converters\DateTimeConverter.cs" />
+    <Compile Include="YoutubeDLSharp\Converters\StringConverters.cs" />
+    <Compile Include="YoutubeDLSharp\DownloadProgress.cs" />
+    <Compile Include="YoutubeDLSharp\Helpers\OSHelper.cs" />
+    <Compile Include="YoutubeDLSharp\Helpers\ProcessExtensions.cs" />
+    <Compile Include="YoutubeDLSharp\Helpers\ProcessRunner.cs" />
+    <Compile Include="YoutubeDLSharp\Metadata\ChapterData.cs" />
+    <Compile Include="YoutubeDLSharp\Metadata\CommentData.cs" />
+    <Compile Include="YoutubeDLSharp\Metadata\FormatData.cs" />
+    <Compile Include="YoutubeDLSharp\Metadata\MetadataEnums.cs" />
+    <Compile Include="YoutubeDLSharp\Metadata\SubtitleData.cs" />
+    <Compile Include="YoutubeDLSharp\Metadata\ThumbnailData.cs" />
+    <Compile Include="YoutubeDLSharp\Metadata\VideoData.cs" />
+    <Compile Include="YoutubeDLSharp\Options\Enums.cs" />
+    <Compile Include="YoutubeDLSharp\Options\IOption.cs" />
+    <Compile Include="YoutubeDLSharp\Options\MultiOption.cs" />
+    <Compile Include="YoutubeDLSharp\Options\MultiValue.cs" />
+    <Compile Include="YoutubeDLSharp\Options\Option.cs" />
+    <Compile Include="YoutubeDLSharp\Options\OptionComparer.cs" />
+    <Compile Include="YoutubeDLSharp\Options\OptionSet.Authentication.cs" />
+    <Compile Include="YoutubeDLSharp\Options\OptionSet.cs" />
+    <Compile Include="YoutubeDLSharp\Options\OptionSet.Custom.cs" />
+    <Compile Include="YoutubeDLSharp\Options\OptionSet.Deprecated.cs" />
+    <Compile Include="YoutubeDLSharp\Options\OptionSet.Download.cs" />
+    <Compile Include="YoutubeDLSharp\Options\OptionSet.Extractor.cs" />
+    <Compile Include="YoutubeDLSharp\Options\OptionSet.FileSystem.cs" />
+    <Compile Include="YoutubeDLSharp\Options\OptionSet.General.cs" />
+    <Compile Include="YoutubeDLSharp\Options\OptionSet.GeoRestriction.cs" />
+    <Compile Include="YoutubeDLSharp\Options\OptionSet.InternetShortcut.cs" />
+    <Compile Include="YoutubeDLSharp\Options\OptionSet.Network.cs" />
+    <Compile Include="YoutubeDLSharp\Options\OptionSet.PostProcessing.cs" />
+    <Compile Include="YoutubeDLSharp\Options\OptionSet.Sponsorblock.cs" />
+    <Compile Include="YoutubeDLSharp\Options\OptionSet.Subtitle.cs" />
+    <Compile Include="YoutubeDLSharp\Options\OptionSet.Thumbnail.cs" />
+    <Compile Include="YoutubeDLSharp\Options\OptionSet.VerbosityAndSimulation.cs" />
+    <Compile Include="YoutubeDLSharp\Options\OptionSet.VideoFormat.cs" />
+    <Compile Include="YoutubeDLSharp\Options\OptionSet.VideoSelection.cs" />
+    <Compile Include="YoutubeDLSharp\Options\OptionSet.Workarounds.cs" />
+    <Compile Include="YoutubeDLSharp\Options\Utils.cs" />
+    <Compile Include="YoutubeDLSharp\RunResult.cs" />
+    <Compile Include="YoutubeDLSharp\Utils.cs" />
+    <Compile Include="YoutubeDLSharp\YoutubeDL.cs" />
+    <Compile Include="YoutubeDLSharp\YoutubeDLProcess.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include=".gitignore" />
+    <Content Include="README.md" />
+    <Content Include="YoutubeDLSharp\Options\autoconvert.py" />
+    <Content Include="YoutubeDLSharp\YoutubeDLSharp.csproj" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PostBuildEvent>F:\Tools\NetcodePatcher\NetcodePatcher.dll $(TargetDir) F:\Tools\NetcodePatcher\deps\</PostBuildEvent>
+  </PropertyGroup>
+</Project>
