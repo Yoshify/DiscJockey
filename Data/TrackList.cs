@@ -43,7 +43,7 @@ namespace DiscJockey.Data
             var track = new Track(
                 audioClip,
                 new TrackMetadata(
-                    audioClip.name, -1, audioClip.length
+                    audioClip.name, _trackList.Count, audioClip.length
                 ));
             _trackList.Add(track);
             return track;
