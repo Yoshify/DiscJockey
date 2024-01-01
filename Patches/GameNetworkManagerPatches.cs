@@ -33,6 +33,15 @@ namespace DiscJockey.Patches
         [HarmonyPrefix]
         public static void StartDisconnectPatch()
         {
+            if (DiscJockeyNetworkManager.Instance.PlayerHasPendingDownloadTask(LocalPlayerHelper.Player.playerClientId,
+                    out var tasks))
+            {
+                foreach (var task in tasks)
+                {
+                    DiscJockeyNetworkManager.Instance.NotifyPlayerFailedDownloadTaskServerRpc(LocalPlayerHelper.Player.playerClientId, task);
+                }
+            }
+            
             try
             {
                 if (NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsServer)
@@ -49,6 +58,7 @@ namespace DiscJockey.Patches
 
             DiscJockeyBoomboxManager.DisableInteraction();
             DiscJockeyInputManager.EnablePlayerInteractions();
+            
             OnDisconnect?.Invoke();
         }
     }

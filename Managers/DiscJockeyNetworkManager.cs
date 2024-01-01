@@ -185,6 +185,15 @@ namespace DiscJockey.Managers
             if (Instance == null) Instance = this;
         }
 
+        public bool PlayerHasPendingDownloadTask(ulong playerId, out List<string> pendingTasks)
+        {
+            var allPendingTasks = PendingDownloadTasks.Keys.ToList().Where(task => PendingDownloadTasks[task].Contains(playerId)).ToList();
+
+            pendingTasks = allPendingTasks;
+            
+            return allPendingTasks.Count > 0;
+        }
+
         private void CancelPendingTask(string taskId)
         {
             PendingDownloadTasks.Remove(taskId);
