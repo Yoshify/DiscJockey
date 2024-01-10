@@ -37,7 +37,7 @@ public class DiscJockeyConfig : NetworkedConfig<DiscJockeyConfig>
             "Gameplay",
             "Hotkey",
             "<Keyboard>/F10",
-            "The key used to open DiscJockey in game. This is a Unity Input Action and specifically needs to follow the format of <Device>/Key."
+            "[NOTE: If using InputUtils, this bind will be ignored. Please refer to changing the keybind ingame with InputUtils instead] The key used to open DiscJockey in game. This is a Unity Input Action and specifically needs to follow the format of <Device>/Key."
         ).Value;
 
         InterfaceColour = cfg.Bind(
