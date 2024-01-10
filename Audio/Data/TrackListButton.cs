@@ -54,6 +54,7 @@ public class TrackListButton : MonoBehaviour, IPointerEnterHandler, IPointerExit
         _trackNameScrollRoutineCancellationSource = new CancellationTokenSource();
         TrackIndicatorText.horizontalAlignment = HorizontalAlignmentOptions.Left;
         DJNetworkManager.OnAudioStreamTransmitStarted += OnPlaybackStarted;
+        DJNetworkManager.OnAudioStreamPlaybackStopped += OnPlaybackStopped;
         TrackButton.onClick.AddListener(RequestPlayTrack);
         AddTrackSaveButton.onClick.AddListener(StartDownload);
         AddTrackCancelButton.onClick.AddListener(() =>
@@ -61,6 +62,11 @@ public class TrackListButton : MonoBehaviour, IPointerEnterHandler, IPointerExit
             OnAddTrackCancelled?.Invoke();
             Destroy(gameObject);
         });
+    }
+
+    private void OnPlaybackStopped(ulong senderClientId, ulong networkedBoomboxId)
+    {
+        if (_buttonState == ButtonState.Playing) SetButtonState(ButtonState.Default);
     }
 
     private void OnPlaybackStarted(ulong senderClientId, ulong networkedBoomboxId,
