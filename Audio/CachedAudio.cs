@@ -22,15 +22,18 @@ public class CachedAudio
         await using var audioFileReader = new AudioFileReader(fileName);
         cachedAudio.Length = (float)audioFileReader.TotalTime.TotalSeconds;
         cachedAudio.Format = audioFileReader.WaveFormat;
-        cachedAudio.LengthInSamples = (int)(audioFileReader.Length / 4);
+        cachedAudio.LengthInSamples = (int)(audioFileReader.WaveFormat.SampleRate * audioFileReader.WaveFormat.Channels * cachedAudio.Length);//(int)(audioFileReader.Length / 4);
         cachedAudio.AudioData = new float[cachedAudio.LengthInSamples];
         cachedAudio.Name = name;
-
+        
         if (audioFileReader.WaveFormat.SampleRate != 48000)
         {
             DiscJockeyPlugin.LogInfo($"CachedAudio<FromFilePath>: {fileName} will be resampled to 48khz so that it's Opus compatible");
             var conversionFormat = new WaveFormat(48000, audioFileReader.WaveFormat.Channels);
             using var resampler = new MediaFoundationResampler(audioFileReader, conversionFormat);
+            cachedAudio.Format = conversionFormat;
+            cachedAudio.LengthInSamples = (int)(resampler.WaveFormat.SampleRate * resampler.WaveFormat.Channels * cachedAudio.Length);
+            cachedAudio.AudioData = new float[cachedAudio.LengthInSamples];
             await Task.Run(() => resampler.ToSampleProvider().Read(cachedAudio.AudioData, 0, cachedAudio.LengthInSamples));
             return cachedAudio;
         }
