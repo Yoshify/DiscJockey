@@ -1,4 +1,7 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Reflection;
 using BepInEx;
 using BepInEx.Logging;
@@ -81,7 +84,15 @@ public class DiscJockeyPlugin : BaseUnityPlugin
     {
         if (_networkPatchInit) return;
 
-        var types = Assembly.GetExecutingAssembly().GetTypes();
+        IEnumerable<Type> types;
+        try
+        {
+            types = Assembly.GetExecutingAssembly().GetTypes();
+        }
+        catch (ReflectionTypeLoadException e)
+        {
+            types = e.Types.Where(t => t != null);
+        }
         foreach (var type in types)
         {
             var methods = type.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
