@@ -24,7 +24,27 @@ DiscJockey has been designed as a drop-in replacement for [Custom Boombox Music]
 
 ## Adding Custom Music
 
-Simply drag any **MP3** or **WAV** file into the `Custom Songs` folder within the `DiscJockey` plugin folder.
+Simply drag any **MP3** or **WAV** file into the `Custom Songs` folder within the `DiscJockey` plugin folder. If your audio has a sample rate lower than 48khz, it'll be resampled at load - the effect on load time is minimal.
+
+Other plugins that contain a `Custom Songs` folder will also be loaded by DiscJockey.
+
+## Expected folder structure
+Note: the `Custom Songs`, `Download Cache` and `Downloaders` folders will be created at first launch.
+It's **essential** that the `discjockey` file lives in the `Assets` folder within the `Yoshify-DiscJockey` folder!
+```
+BepInEx/
+  plugins/
+    Yoshify-DiscJockey/
+      Assets/
+        discjockey
+      Lib/
+        DiscJockey.dll
+        <other dll dependencies>
+```
+## Common problems
+
+### Config has duplicated entries
+The config changed quite a lot in the latest version. If you're updating from an old version, you'll need to delete the config and recreate it by launching your game.
 
 ## Bugs
 
