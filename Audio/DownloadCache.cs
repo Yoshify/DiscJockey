@@ -53,9 +53,21 @@ public class DownloadCache
         }
         catch (Exception e)
         {
-            DiscJockeyPlugin.LogError($"DownloadCache<Load>: Error occurred while loading Download Cache: {e}");
+            DiscJockeyPlugin.LogWarning($"DownloadCache<Load>: Error occurred while loading the Download Cache, resetting it.");
             File.Delete(cacheFilePath);
+
+            var directory = Path.GetDirectoryName(cacheFilePath);
+            if (Directory.Exists(directory))
+            {
+                var files = Directory.GetFiles(directory);
+                foreach (var file in files)
+                {
+                    File.Delete(file);
+                }
+            }
+            
             File.Create(cacheFilePath);
+            
             var newCache = new DownloadCache
             {
                 _filePath = cacheFilePath
