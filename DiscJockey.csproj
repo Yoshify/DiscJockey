@@ -75,7 +75,6 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
-        <Folder Include="API\Audio\" />
         <Folder Include="Properties\"/>
     </ItemGroup>
     <ItemGroup>
