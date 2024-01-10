@@ -1,145 +1,89 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
+using DiscJockey.Audio;
+using DiscJockey.Input;
+using DiscJockey.Input.Utils;
 using DiscJockey.Managers;
-using DiscJockey.Utils;
 using HarmonyLib;
+using UnityEngine;
 
-namespace DiscJockey.Patches
+namespace DiscJockey.Patches;
+
+[HarmonyPatch(typeof(BoomboxItem))]
+internal class BoomboxItemPatches
 {
-    [HarmonyPatch(typeof(BoomboxItem))]
-    internal class BoomboxItemPatches
+    [HarmonyPatch(typeof(BoomboxItem), "Start")]
+    [HarmonyPostfix]
+    private static void StartPatch(BoomboxItem __instance)
     {
-        [HarmonyPatch(typeof(BoomboxItem), "Start")]
-        [HarmonyPostfix]
-        private static void StartPatch(BoomboxItem __instance)
+        DiscJockeyPlugin.LogInfo("BoomboxItemPatches<StartPatch>: Registering Boombox");
+        DJNetworkManager.Instance.RegisterBoomboxServerRpc(__instance.NetworkObjectId);
+        DiscJockeyPlugin.LogInfo("BoomboxItemPatches<StartPatch>: Assigning tooltip");
+        __instance.itemProperties.canBeGrabbedBeforeGameStart = true;
+
+        if (!__instance.itemProperties.toolTips.Contains(InputManager.OpenDiscJockeyTooltip))
+            __instance.itemProperties.toolTips = __instance.itemProperties.toolTips.AddItem(InputManager.OpenDiscJockeyTooltip).ToArray();
+
+        if (DiscJockeyConfig.SyncedConfig.DisableBatteryDrain) __instance.itemProperties.batteryUsage = int.MaxValue;
+    }
+
+    [HarmonyPatch(typeof(BoomboxItem), "StartMusic")]
+    [HarmonyPrefix]
+    public static bool StartMusicPatch(bool startMusic, BoomboxItem __instance)
+    {
+        DiscJockeyPlugin.LogInfo($"BoomboxItemPatches<StartMusicPatch>: Called, startMusic is {startMusic}");
+
+        if (!AudioManager.IsReady() || !BoomboxManager.IsLookingAtOrHoldingBoombox) return false;
+
+        DiscJockeyPlugin.LogInfo("BoomboxItemPatches<StartMusicPatch>: DiscJockeyAudioManager ready");
+        if (startMusic)
         {
-            DiscJockeyPlugin.LogInfo($"BoomboxItemPatches<StartPatch>: Registering Boombox");
-            DiscJockeyNetworkManager.Instance.RegisterBoomboxServerRpc(__instance.NetworkObjectId);
-            DiscJockeyPlugin.LogInfo($"BoomboxItemPatches<StartPatch>: Assigning tooltip");
-            __instance.itemProperties.canBeGrabbedBeforeGameStart = true;
-
-            var panelHotkeyRaw = DiscJockeyConfig.DiscJockeyPanelHotkey.Value;
-            var panelHotkeySplit = panelHotkeyRaw.Split('/');
-            var panelHotkeyCleaned = string.Empty;
-            
-            // Input Actions should have a /, but lets check to be sure.
-            panelHotkeyCleaned = panelHotkeySplit.Length == 1 ? panelHotkeySplit[0] : panelHotkeySplit[1];
-            
-            __instance.itemProperties.toolTips = __instance.itemProperties.toolTips.AddItem($"Open DiscJockey:    [{panelHotkeyCleaned}]").ToArray();
-            __instance.boomboxAudio.loop = false;
-
-            DiscJockeyNetworkManager.OnPlayTrackRequestReceived += (boombox, metadata) =>
+            if (BoomboxManager.LookedAtOrHeldBoombox.IsPlaying ||
+                BoomboxManager.LookedAtOrHeldBoombox.IsStreaming)
             {
-                if (__instance.NetworkObjectId == boombox.NetworkObjectId)
-                {
-                    __instance.PlayTrack(metadata.CurrentTrackMetadata.Index);
-                }
-            };
-            
-            DiscJockeyNetworkManager.OnStopTrackRequestReceived += (boombox, metadata) =>
-            {
-                if (__instance.NetworkObjectId == boombox.NetworkObjectId)
-                {
-                    __instance.StopTrack();
-                }
-            };
-
-            DiscJockeyNetworkManager.OnScrubTrackRequestReceived += (boombox, metadata) =>
-            {
-                if (__instance.NetworkObjectId == boombox.NetworkObjectId)
-                {
-                    __instance.ScrubTrack(metadata.CurrentTrackMetadata.Progress);
-                }
-            };
-        }
-        
-        [HarmonyPatch(typeof(BoomboxItem), "ItemActivate")]
-        [HarmonyTranspiler]
-        public static IEnumerable<CodeInstruction> ItemActivatePatch(IEnumerable<CodeInstruction> codeInstructions)
-        {
-            var code = new List<CodeInstruction>(codeInstructions);
-            var replacementIndex = -1;
-            for(var i = 0; i < code.Count(); i++)
-            {
-                var currentInstruction = code[i];
-                var nextInstruction = code[i + 1];
-
-                if(currentInstruction.opcode == OpCodes.Ldarg_1 && nextInstruction.opcode == OpCodes.Ldc_I4_0)
-                {
-                    replacementIndex = i;
-                    break;
-                }
-            }
-            code.RemoveAt(replacementIndex);
-            code.Insert(replacementIndex, new CodeInstruction(OpCodes.Ldarg_2));
-            return code;
-        }
-        
-        [HarmonyPatch(typeof(BoomboxItem), "StartMusic")]
-        [HarmonyPrefix]
-        public static bool StartMusicPatch(bool startMusic, BoomboxItem __instance)
-        {
-            DiscJockeyPlugin.LogInfo($"BoomboxItemPatches<StartMusicPatch>: Called, startMusic is {startMusic}");
-
-            if (DiscJockeyAudioManager.IsReady())
-            {
-                DiscJockeyPlugin.LogInfo($"BoomboxItemPatches<StartMusicPatch>: DiscJockeyAudioManager ready");
-                if (startMusic)
-                {
-                    if (__instance.isPlayingMusic)
-                    {
-                        DiscJockeyPlugin.LogInfo($"BoomboxItemPatches<StartMusicPatch>: Stop Music requested");
-                        DiscJockeyAudioManager.RequestStopTrack();
-                    }
-                    else
-                    {
-                        DiscJockeyPlugin.LogInfo($"BoomboxItemPatches<StartMusicPatch>: Start Music requested");
-                        if (DiscJockeyBoomboxManager.InteractionsActive)
-                        {
-                            if (DiscJockeyBoomboxManager.ActiveBoomboxMetadata.CurrentTrackMetadata.TrackSelected)
-                            {
-                                DiscJockeyPlugin.LogInfo($"BoomboxItemPatches<StartMusicPatch>: Playing track from current selection: {DiscJockeyBoomboxManager.ActiveBoomboxMetadata}");
-                                __instance.boomboxAudio.clip = DiscJockeyAudioManager.TrackList.GetTrackAtIndex(DiscJockeyBoomboxManager.ActiveBoomboxMetadata.CurrentTrackMetadata.Index).AudioClip;
-                            }
-                            else
-                            {
-                                DiscJockeyPlugin.LogInfo($"BoomboxItemPatches<StartMusicPatch>: Requesting random track");
-                                var randomTrack = DiscJockeyAudioManager.TrackList.GetRandomTrack();
-                                DiscJockeyAudioManager.RequestPlayTrack(randomTrack);
-                            }
-                        }
-                        else
-                        {
-                            DiscJockeyPlugin.LogInfo($"BoomboxItemPatches<StartMusicPatch>: Requesting random track");
-                            var randomTrack = DiscJockeyAudioManager.TrackList.GetRandomTrack();
-                            DiscJockeyAudioManager.RequestPlayTrack(randomTrack);
-                        }
-                    }
-                }
-                else
-                {
-                    DiscJockeyPlugin.LogInfo($"BoomboxItem<StartMusic>: Stop Music requested");
-                    DiscJockeyAudioManager.RequestStopTrack();
-                }
-                
+                DiscJockeyPlugin.LogInfo("BoomboxItemPatches<StartMusicPatch>: Stop Music requested");
+                AudioManager.RequestStopTrack();
             }
             else
             {
-                __instance.isBeingUsed = startMusic;
-                __instance.isPlayingMusic = startMusic;
+                if (AudioManager.TrackList.HasAnyTracks)
+                {
+                    DiscJockeyPlugin.LogInfo(
+                        "BoomboxItemPatches<StartMusicPatch>: Start Music requested, requesting random track");
+                    var randomTrack = AudioManager.TrackList.GetRandomTrack();
+                    AudioManager.RequestPlayTrack(randomTrack);
+                }
             }
-            return false;
         }
-        
-        [HarmonyPatch(typeof(BoomboxItem), "PocketItem")]
-        [HarmonyPostfix]
-        private static void PocketItemPatch(BoomboxItem __instance)
+        else
         {
-            if (__instance.IsOwner && DiscJockeyBoomboxManager.InteractionsActive)
-            {
-                DiscJockeyBoomboxManager.DisableInteraction();
-            }
+            DiscJockeyPlugin.LogInfo("BoomboxItem<StartMusic>: Stop Music requested");
+            AudioManager.RequestStopTrack();
         }
+
+        __instance.isBeingUsed = startMusic;
+        __instance.isPlayingMusic = startMusic;
+
+        return false;
+    }
+
+    [HarmonyPatch(typeof(BoomboxItem), "PocketItem")]
+    [HarmonyTranspiler]
+    private static IEnumerable<CodeInstruction> PocketItemTranspilerPatch(IEnumerable<CodeInstruction> codeInstructions)
+    {
+        return new CodeMatcher(codeInstructions)
+            .SearchForward(i => i.Calls(AccessTools.Method(typeof(GrabbableObject), "PocketItem")))
+            .Advance(1)
+            .Set(OpCodes.Ret, null)
+            .InstructionEnumeration();
+    }
+
+    [HarmonyPatch(typeof(BoomboxItem), "PocketItem")]
+    [HarmonyPostfix]
+    private static void PocketItemPatch(BoomboxItem __instance)
+    {
+        if (__instance.IsOwner && BoomboxManager.IsLookingAtOrHoldingBoombox)
+            BoomboxManager.DisableInteraction();
     }
 }

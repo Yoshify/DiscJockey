@@ -1,65 +1,69 @@
-﻿using DiscJockey.Managers;
-using HarmonyLib;
-using System;
+﻿using System;
+using DiscJockey.Input;
+using DiscJockey.Managers;
 using DiscJockey.Utils;
+using HarmonyLib;
 using Unity.Netcode;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
-namespace DiscJockey.Patches
+namespace DiscJockey.Patches;
+
+[HarmonyPatch(typeof(GameNetworkManager))]
+internal class GameNetworkManagerPatches
 {
-    [HarmonyPatch(typeof(GameNetworkManager))]
-    internal class GameNetworkManagerPatches
+    public static GameObject DJNetworkManagerPrefab;
+    public static GameObject HostDJNetworkManager;
+
+    public static event Action OnDisconnect;
+
+    [HarmonyPatch(typeof(GameNetworkManager), "Start")]
+    [HarmonyPrefix]
+    public static void StartPatch()
     {
-        public static GameObject DJNetworkManagerPrefab;
-        public static GameObject HostDJNetworkManager;
+        DJNetworkManagerPrefab = AssetLoader.NetworkManagerPrefab;
+        DiscJockeyPlugin.LogInfo(
+            $"GameNetworkManagerPatches<StartPatch>: Loaded DiscJockeyNetworkManager Prefab? {DJNetworkManagerPrefab != null}");
 
-        public static event Action OnDisconnect;
-
-        [HarmonyPatch(typeof(GameNetworkManager), "Start")]
-        [HarmonyPrefix]
-        public static void StartPatch()
+        if (DJNetworkManagerPrefab != null)
         {
-            DJNetworkManagerPrefab = AssetUtils.NetworkManagerPrefab;
-            DiscJockeyPlugin.LogInfo($"GameNetworkManagerPatches<StartPatch>: Loaded DiscJockeyNetworkManager Prefab? {DJNetworkManagerPrefab != null}");
+            NetworkManager.Singleton.AddNetworkPrefab(DJNetworkManagerPrefab);
+            DiscJockeyPlugin.LogInfo(
+                "GameNetworkManagerPatches<StartPatch>: Registered DiscJockeyNetworkManager Prefab");
+        }
+    }
 
-            if (DJNetworkManagerPrefab != null )
+    [HarmonyPatch(typeof(GameNetworkManager), "StartDisconnect")]
+    [HarmonyPrefix]
+    public static void StartDisconnectPatch()
+    {
+        try
+        {
+            if (NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsServer)
             {
-                NetworkManager.Singleton.AddNetworkPrefab(DJNetworkManagerPrefab);
-                DiscJockeyPlugin.LogInfo("GameNetworkManagerPatches<StartPatch>: Registered DiscJockeyNetworkManager Prefab");
+                DiscJockeyPlugin.LogInfo("GameNetworkManagerPatches<StartDisconnectPatch>: Destroying NetworkManager");
+                Object.Destroy(HostDJNetworkManager);
+                HostDJNetworkManager = null;
+            }
+        }
+        catch
+        {
+            DiscJockeyPlugin.LogError(
+                "GameNetworkManagerPatches<StartDisconnectPatch>: Failed to destroy NetworkManager");
+        }
+
+        if (BoomboxManager.IsLookingAtOrHoldingBoombox)
+        {
+            if (BoomboxManager.LookedAtOrHeldBoombox.IsStreaming)
+            {
+                BoomboxManager.LookedAtOrHeldBoombox.StopStreamAndPlaybackAndNotify();
             }
         }
         
-        [HarmonyPatch(typeof(GameNetworkManager), "StartDisconnect")]
-        [HarmonyPrefix]
-        public static void StartDisconnectPatch()
-        {
-            if (DiscJockeyNetworkManager.Instance.PlayerHasPendingDownloadTask(LocalPlayerHelper.Player.playerClientId,
-                    out var tasks))
-            {
-                foreach (var task in tasks)
-                {
-                    DiscJockeyNetworkManager.Instance.NotifyPlayerFailedDownloadTaskServerRpc(LocalPlayerHelper.Player.playerClientId, task);
-                }
-            }
-            
-            try
-            {
-                if (NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsServer)
-                {
-                    DiscJockeyPlugin.LogInfo("GameNetworkManagerPatches<StartDisconnectPatch>: Destroying NetworkManager");
-                    UnityEngine.Object.Destroy(HostDJNetworkManager);
-                    HostDJNetworkManager = null;
-                }
-            }
-            catch
-            {
-                DiscJockeyPlugin.LogError("GameNetworkManagerPatches<StartDisconnectPatch>: Failed to destroy NetworkManager");
-            }
+        BoomboxManager.DisableInteraction();
+        InputManager.EnablePlayerInteractions();
+        DiscJockeyConfig.RevertSync();
 
-            DiscJockeyBoomboxManager.DisableInteraction();
-            DiscJockeyInputManager.EnablePlayerInteractions();
-            
-            OnDisconnect?.Invoke();
-        }
+        OnDisconnect?.Invoke();
     }
 }

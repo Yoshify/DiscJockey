@@ -1,27 +1,28 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿namespace DiscJockey.Utils;
 
-namespace DiscJockey.Utils
+public class GameUtils
 {
-    public class GameUtils
+    public const string DiscJockeyNameColour = "#1565C0";
+    public const string StandardMessageColour = "#FFFFFF";
+    public const string PlayerNameColour = "#388E3C";
+    private static string DiscJockeyFormattedName => GetColourFormattedText("DiscJockey", DiscJockeyNameColour);
+
+    public static string GetPlayerName(ulong playerId)
     {
-        public static List<ulong> ConnectedPlayerIDs => StartOfRound.Instance.ClientPlayerList.Keys.ToList();
+        return !StartOfRound.Instance.ClientPlayerList.TryGetValue(playerId, out var playerIndex)
+            ? "UNKNOWN"
+            : StartOfRound.Instance.allPlayerScripts[playerIndex].playerUsername;
+    }
 
-        public static string GetPlayerName(ulong playerId) =>
-            !StartOfRound.Instance.ClientPlayerList.TryGetValue(playerId, out var playerIndex) ? "UNKNOWN" : StartOfRound.Instance.allPlayerScripts[playerIndex].playerUsername;
-        
-        public const string DiscJockeyNameColour = "#1565C0";
-        public const string StandardMessageColour = "#FFFFFF";
-        public const string PlayerNameColour = "#388E3C";
-        
-        public static void LogDiscJockeyMessageToServer(string message)
-        {
-            var formattedMessage = $"{DiscJockeyFormattedName}{GetColourFormattedText($"$: {message}", StandardMessageColour)}";
-            HUDManager.Instance.AddTextToChatOnServer(formattedMessage);
-        }
+    public static void LogDiscJockeyMessageToLocalChat(string message)
+    {
+        var formattedMessage =
+            $"{DiscJockeyFormattedName}{GetColourFormattedText($"$: {message}", StandardMessageColour)}";
+        HUDManager.Instance.AddChatMessage(formattedMessage);
+    }
 
-        private static string DiscJockeyFormattedName => GetColourFormattedText("DiscJockey", DiscJockeyNameColour);
-        
-        public static string GetColourFormattedText(string text, string hexColour) => $"<color={hexColour}>{text}</color>";
+    public static string GetColourFormattedText(string text, string hexColour)
+    {
+        return $"<color={hexColour}>{text}</color>";
     }
 }
