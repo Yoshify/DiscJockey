@@ -16,7 +16,7 @@ public class YouTubeContentProvider : ContentProvider
     public override ParsedUri ParseUri(Uri uri)
     {
         if (uri.Host.Contains("youtu.be"))
-            return new ParsedUri(uri, uri.AbsolutePath[1..], uri.Host + uri.AbsolutePath, ContentType.Standard);
+            return new ParsedUri(uri, uri.AbsolutePath[1..], uri.OriginalString, ContentType.Standard);
 
         var contentType = ContentType.Standard;
         var queryStrings = HttpUtility.ParseQueryString(uri.Query);
