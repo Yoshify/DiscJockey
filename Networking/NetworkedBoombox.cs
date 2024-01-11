@@ -54,10 +54,10 @@ public class NetworkedBoombox
     {
         if (LocalClientOwnsCurrentTrack)
         {
-            AudioManager.RequestPlayTrack(
+            StartStreamingTrack(
                 AudioManager.TrackList.GetNextTrack(
-                    BoomboxManager.LookedAtOrHeldBoombox.CurrentTrackIndexInOwnersTracklist,
-                    BoomboxManager.LookedAtOrHeldBoombox.BoomboxPlaybackMode));
+                    CurrentTrackIndexInOwnersTracklist,
+                    BoomboxPlaybackMode));
         }
     }
 
