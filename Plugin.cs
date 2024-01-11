@@ -129,6 +129,6 @@ public class DiscJockeyPlugin : BaseUnityPlugin
 
     private void Log(string message, LogLevel logLevel)
     {
-        _logger.Log(logLevel, $"{PluginName} {PluginVersion}: {message}");
+        _logger.Log(logLevel, $"[{DateTime.Now:HH:mm:ss.ff}] {PluginName} {PluginVersion}: {message}");
     }
 }
