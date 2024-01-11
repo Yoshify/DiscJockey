@@ -45,7 +45,7 @@ public class NetworkedAudioReceiver
 
     public void StartPlayback(int sampleLength)
     {
-        DiscJockeyPlugin.LogInfo($"NetworkedAudioReceiver<StartPlayback>: Starting - is playing? {IsPlaying} {_audioSource.isPlaying}");
+        DiscJockeyPlugin.LogInfo($"NetworkedAudioReceiver<StartPlayback>: Starting playback - buffer resizing buffer to new sampleLength {sampleLength}");
         _audioFrameBuffer.Reset();
         _audioFrameBuffer.SizeBufferInSamples(sampleLength);
         _playedSamples = 0;
