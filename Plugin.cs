@@ -21,7 +21,7 @@ public class DiscJockeyPlugin : BaseUnityPlugin
 {
     public const string PluginID = "Yoshify.DiscJockey";
     public const string PluginName = "DiscJockey";
-    public const string PluginVersion = "1.1.2";
+    public const string PluginVersion = "1.1.3";
     public const string PluginFolderName = "Yoshify-DiscJockey";
     public static string PluginFolderPath => Path.Combine(Paths.PluginPath, PluginFolderName);
 
