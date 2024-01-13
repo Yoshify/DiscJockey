@@ -94,8 +94,11 @@ public class NetworkedBoombox
         }
 
         DiscJockeyPlugin.LogInfo("NetworkedBoombox<OnAudioStreamStarted>: Starting playback loop.");
-        
-        Boombox.isPlayingMusic = true;
+
+        if (DiscJockeyConfig.SyncedConfig.EntitiesHearMusic)
+        {
+            Boombox.isPlayingMusic = true;
+        }
         _networkedAudioReceiver.StartPlayback(trackMetadata.LengthInSamples);
     }
 
@@ -161,7 +164,10 @@ public class NetworkedBoombox
 
     public void StopPlaybackLocally()
     {
-        Boombox.isPlayingMusic = false;
+        if (DiscJockeyConfig.SyncedConfig.EntitiesHearMusic)
+        {
+            Boombox.isPlayingMusic = false;
+        }
         _networkedAudioReceiver.StopPlayback();
         Boombox.boomboxAudio.PlayOneShot(Boombox.GetStopAudio());
     }
