@@ -79,7 +79,7 @@ public class NetworkedBoombox
             DiscJockeyPlugin.LogInfo("NetworkedBoombox<OnAudioStreamStarted>: We were playing, now we're not");
             StopPlaybackLocally();
         }
-
+        
         if (!_networkedAudioReceiver.CurrentAudioFormat.Equals(audioFormat))
         {
             DiscJockeyPlugin.LogInfo(
@@ -94,6 +94,8 @@ public class NetworkedBoombox
         }
 
         DiscJockeyPlugin.LogInfo("NetworkedBoombox<OnAudioStreamStarted>: Starting playback loop.");
+        
+        Boombox.isPlayingMusic = true;
         _networkedAudioReceiver.StartPlayback(trackMetadata.LengthInSamples);
     }
 
@@ -139,14 +141,6 @@ public class NetworkedBoombox
     public void StartStreamingTrack(Track track)
     {
         DiscJockeyPlugin.LogInfo($"NetworkedBoombox<StartStreamingTrack>: Requested stream for {track.Audio.Name}");
-
-        if (_networkedAudioSender.IsStreaming)
-        {
-            DiscJockeyPlugin.LogInfo(
-                "NetworkedBoombox<StartStreamingTrack>: We were already streaming, stopping previous stream.");
-            //_networkedAudioSender.StopStreaming();
-        }
-        
         
         _streamedTrackMetadata = track.ExtractMetadata();
         _streamedAudioFormat = new AudioFormat(SampleRate, FrameSizeMs, track.Audio.Format.Channels);
@@ -167,6 +161,7 @@ public class NetworkedBoombox
 
     public void StopPlaybackLocally()
     {
+        Boombox.isPlayingMusic = false;
         _networkedAudioReceiver.StopPlayback();
         Boombox.boomboxAudio.PlayOneShot(Boombox.GetStopAudio());
     }
