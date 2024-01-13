@@ -26,6 +26,7 @@ public class AudioLoader
     private static string _downloadersDirectory;
     private static int _maximumCachedDownloads;
     public static DownloadCache DownloadCache;
+    private static bool _downloadCacheInUse = true;
 
     // param: url, error
     public static event Action<string, string> OnAudioDownloadFailed;
@@ -81,6 +82,14 @@ public class AudioLoader
             Directory.GetFiles(audioDownloadersDirectory).First(file => file.Contains("ffmpeg"));
         YouTubeDownloader.OutputFolder = downloadCacheDirectory;
         YouTubeDownloader.OutputFileTemplate = "%(id)s.%(ext)s";
+
+        if (DiscJockeyConfig.LocalConfig.KeepDownloadedSongsPermanently)
+        {
+            _downloadCacheInUse = false;
+            _downloadedAudioDirectory = DiscJockeyPlugin.CustomSongsDirectory;
+            YouTubeDownloader.OutputFolder = _downloadedAudioDirectory;
+            YouTubeDownloader.OutputFileTemplate = "%(title)s.%(ext)s";
+        }
     }
 
     #region Disk API
@@ -155,7 +164,7 @@ public class AudioLoader
 
         onProgress ??= progress => OnAudioDownloadProgress?.Invoke(uri.Url, progress);
 
-        if (DownloadCache.IdExistsInCache(uri.Id))
+        if (_downloadCacheInUse && DownloadCache.IdExistsInCache(uri.Id))
         {
             var cachedDownload = DownloadCache.GetDownloadFromCache(uri.Id);
             DiscJockeyPlugin.LogInfo($"{contentTitle} exists in our cache");
@@ -253,7 +262,7 @@ public class AudioLoader
             return;
         }
 
-        if (DownloadCache.IdExistsInCache(videoDataResult.Data.ID))
+        if (_downloadCacheInUse && DownloadCache.IdExistsInCache(videoDataResult.Data.ID))
         {
             var cachedDownload = DownloadCache.GetDownloadFromCache(videoDataResult.Data.ID);
             await LoadAudioFromDisk(cachedDownload.Filepath,
