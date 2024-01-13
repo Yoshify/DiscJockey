@@ -63,6 +63,12 @@ public class TrackList
         return track;
     }
 
+    public void Remove(Track track)
+    {
+        _trackList.Remove(track);
+        SortTracklist();
+    }
+
     public Track Get(int trackIndex) => _trackList[trackIndex];
 
     private int GetNextTrackIndex(int currentTrackIndex, BoomboxPlaybackMode boomboxPlaybackMode,

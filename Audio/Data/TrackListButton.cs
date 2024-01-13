@@ -33,6 +33,8 @@ public class TrackListButton : MonoBehaviour, IPointerEnterHandler, IPointerExit
     public RectTransform TrackNameContainerTransform;
     public Slider DownloadProgressSlider;
     public GameObject TrackContentContainer;
+    public Button DeleteButton;
+    
     private string _activeDownloadUrl;
     private ButtonState _buttonState = ButtonState.Default;
     
@@ -57,11 +59,19 @@ public class TrackListButton : MonoBehaviour, IPointerEnterHandler, IPointerExit
         DJNetworkManager.OnAudioStreamPlaybackStopped += OnPlaybackStopped;
         TrackButton.onClick.AddListener(RequestPlayTrack);
         AddTrackSaveButton.onClick.AddListener(StartDownload);
+        DeleteButton.onClick.AddListener(OnDelete);
         AddTrackCancelButton.onClick.AddListener(() =>
         {
             OnAddTrackCancelled?.Invoke();
             Destroy(gameObject);
         });
+    }
+
+    private void OnDelete()
+    {
+        AudioManager.TrackList.Remove(Track);
+        UIManager.Instance.RemoveTrackListButton(this);
+        Destroy(gameObject);
     }
 
     private void OnPlaybackStopped(ulong senderClientId, ulong networkedBoomboxId)
@@ -198,7 +208,7 @@ public class TrackListButton : MonoBehaviour, IPointerEnterHandler, IPointerExit
                 SetButtonAsDownloading();
                 break;
             case ButtonState.Playing:
-                SetIndicatorAsPlaying();
+                SetButtonAsPlaying();
                 break;
             default:
                 SetButtonAsDefault();
@@ -257,6 +267,8 @@ public class TrackListButton : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
     private void SetButtonAsPendingInput()
     {
+        TrackNameContainerTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 475);
+        DeleteButton.gameObject.SetActive(false);
         TrackButton.interactable = false;
         TrackContentContainer.SetActive(false);
         URLInputContainer.SetActive(true);
@@ -267,6 +279,8 @@ public class TrackListButton : MonoBehaviour, IPointerEnterHandler, IPointerExit
     private void SetButtonAsDownloading()
     {
         SetupDownloadEventListeners();
+        TrackNameContainerTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 475);
+        DeleteButton.gameObject.SetActive(false);
         TrackButton.interactable = false;
         TrackContentContainer.SetActive(true);
         TrackNameText.text = "Loading...";
@@ -278,8 +292,8 @@ public class TrackListButton : MonoBehaviour, IPointerEnterHandler, IPointerExit
     private void SetButtonAsDefault()
     {
         RemoveDownloadEventListeners();
-        TrackButton.interactable = true;
-
+        TrackNameContainerTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 440);
+        DeleteButton.gameObject.SetActive(true);
         TrackContentContainer.SetActive(true);
         URLInputContainer.SetActive(false);
         AddTrackButtonContainer.SetActive(false);
@@ -293,7 +307,20 @@ public class TrackListButton : MonoBehaviour, IPointerEnterHandler, IPointerExit
     private void SetIndicatorAsIndex()
     {
         TrackIndicatorText.text = _trackIndexString;
-        
+    }
+
+    private void SetButtonAsPlaying()
+    {
+        TrackNameContainerTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 475);
+        DeleteButton.gameObject.SetActive(false);
+        TrackContentContainer.SetActive(true);
+        URLInputContainer.SetActive(false);
+        AddTrackButtonContainer.SetActive(false);
+        DownloadProgressSlider.gameObject.SetActive(false);
+
+        TrackNameText.text = _trackName;
+        TrackIndicatorText.text = _trackIndexString;
+        SetIndicatorAsPlaying();
     }
 
     private void SetIndicatorAsPlaying()

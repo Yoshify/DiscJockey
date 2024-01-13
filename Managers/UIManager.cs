@@ -86,6 +86,9 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    public void RemoveTrackListButton(TrackListButton trackListButton) =>
+        _trackListButtonInstances.Remove(trackListButton);
+
     private void ApplyConfig()
     {
         if (DiscJockeyConfig.LocalConfig.DisableCreditsText) CreditsText.gameObject.SetActive(false);
