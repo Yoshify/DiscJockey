@@ -30,6 +30,10 @@ public class DiscJockeyConfig : NetworkedConfig<DiscJockeyConfig>
     [DataMember] public bool NetworkedVolumeControl;
 
     [DataMember] public bool AddVanillaSongsToTracklist;
+    
+    [DataMember] public bool EntitiesHearMusic;
+
+    [DataMember] public bool KeepDownloadedSongsPermanently;
 
     public DiscJockeyConfig(ConfigFile cfg)
     {
@@ -39,7 +43,7 @@ public class DiscJockeyConfig : NetworkedConfig<DiscJockeyConfig>
             "Gameplay",
             "Hotkey",
             "<Keyboard>/F10",
-            "[NOTE: If using InputUtils, this bind will be ignored. Please refer to changing the keybind ingame with InputUtils instead] The key used to open DiscJockey in game. This is a Unity Input Action and specifically needs to follow the format of <Device>/Key."
+            "[NOTE: If using InputUtils, this bind will be ignored. Please refer to changing the keybind in game with InputUtils instead] The key used to open DiscJockey in game. This is a Unity Input Action and specifically needs to follow the format of <Device>/Key."
         ).Value;
         
         AddVanillaSongsToTracklist = cfg.Bind(
@@ -47,6 +51,13 @@ public class DiscJockeyConfig : NetworkedConfig<DiscJockeyConfig>
             "Add Vanilla Boombox Music To Tracklist",
             false,
             "If set to true, the vanilla Boombox music will be added to your tracklist."
+        ).Value;
+        
+        EntitiesHearMusic = cfg.Bind(
+            "Gameplay",
+            "Enemies Hear Music",
+            true,
+            "[OVERRIDDEN BY HOST] If set to false, the Boombox will become inaudible to enemies (e.g, the blind dog, the slime)"
         ).Value;
 
         InterfaceColour = cfg.Bind(
@@ -89,6 +100,13 @@ public class DiscJockeyConfig : NetworkedConfig<DiscJockeyConfig>
             "Disable Credits Text",
             false,
             "On the bottom left of the panel is some credits - I couldn't have made this mod without the support of my friend group. If you'd prefer to hide this text, set this option to true."
+        ).Value;
+        
+        KeepDownloadedSongsPermanently = cfg.Bind(
+            "Downloads",
+            "Permanently Keep Downloaded Songs",
+            false,
+            "Instead of being cached, downloaded songs will instead be saved to your Custom Songs folder to keep around permanently."
         ).Value;
 
         LoadDownloadedSongsFromCacheAtLaunch = cfg.Bind(
