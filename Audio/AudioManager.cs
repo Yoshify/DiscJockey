@@ -23,6 +23,8 @@ public static class AudioManager
     public static event Action<Track> OnTrackAddedToTrackList;
     public static event Action<ulong, float> OnVolumeChanged;
 
+    private static bool _hasLoadedVanillaTracks;
+
     public static bool IsReady()
     {
         return _hasInitialized && _hasFinishedLoading;
@@ -108,6 +110,18 @@ public static class AudioManager
         {
             DiscJockeyPlugin.LogWarning($"DiscJockeyAudioManager<OnAudioDownloadWarning>: {warning}");
         };
+    }
+
+    public static void LoadVanillaMusicFrom(BoomboxItem boombox)
+    {
+        if (_hasLoadedVanillaTracks) return;
+
+        foreach (var clip in boombox.musicAudios)
+        {
+            AudioLoader.ConvertAudioClipToCachedAudio(clip);
+        }
+        
+        _hasLoadedVanillaTracks = true;
     }
 
     public static void RequestPlayTrack(Track track)

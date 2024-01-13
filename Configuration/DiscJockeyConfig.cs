@@ -29,6 +29,8 @@ public class DiscJockeyConfig : NetworkedConfig<DiscJockeyConfig>
 
     [DataMember] public bool NetworkedVolumeControl;
 
+    [DataMember] public bool AddVanillaSongsToTracklist;
+
     public DiscJockeyConfig(ConfigFile cfg)
     {
         InitInstance(this);
@@ -38,6 +40,13 @@ public class DiscJockeyConfig : NetworkedConfig<DiscJockeyConfig>
             "Hotkey",
             "<Keyboard>/F10",
             "[NOTE: If using InputUtils, this bind will be ignored. Please refer to changing the keybind ingame with InputUtils instead] The key used to open DiscJockey in game. This is a Unity Input Action and specifically needs to follow the format of <Device>/Key."
+        ).Value;
+        
+        AddVanillaSongsToTracklist = cfg.Bind(
+            "Gameplay",
+            "Add Vanilla Boombox Music To Tracklist",
+            false,
+            "If set to true, the vanilla Boombox music will be added to your tracklist."
         ).Value;
 
         InterfaceColour = cfg.Bind(

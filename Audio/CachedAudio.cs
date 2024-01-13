@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Threading.Tasks;
 using NAudio.Wave;
+using UnityEngine;
 
 namespace DiscJockey.Audio;
 
@@ -16,13 +17,25 @@ public class CachedAudio
     public float Length { get; private set; }
     public int LengthInSamples { get; private set; }
 
+    public static CachedAudio FromAudioClip(AudioClip audioClip)
+    {
+        var cachedAudio = new CachedAudio();
+        cachedAudio.Length = audioClip.length;
+        cachedAudio.LengthInSamples = (int)(audioClip.frequency * audioClip.channels * audioClip.length);
+        cachedAudio.Format = new WaveFormat(audioClip.frequency, audioClip.channels);
+        cachedAudio.Name = audioClip.name;
+        cachedAudio.AudioData = new float[cachedAudio.LengthInSamples];
+        audioClip.GetData(cachedAudio.AudioData, 0);
+        return cachedAudio;
+    }
+
     public static async Task<CachedAudio> FromFilePath(string fileName, string name)
     {
         var cachedAudio = new CachedAudio();
         await using var audioFileReader = new AudioFileReader(fileName);
         cachedAudio.Length = (float)audioFileReader.TotalTime.TotalSeconds;
         cachedAudio.Format = audioFileReader.WaveFormat;
-        cachedAudio.LengthInSamples = (int)(audioFileReader.WaveFormat.SampleRate * audioFileReader.WaveFormat.Channels * cachedAudio.Length);//(int)(audioFileReader.Length / 4);
+        cachedAudio.LengthInSamples = (int)(audioFileReader.WaveFormat.SampleRate * audioFileReader.WaveFormat.Channels * cachedAudio.Length);
         cachedAudio.AudioData = new float[cachedAudio.LengthInSamples];
         cachedAudio.Name = name;
         

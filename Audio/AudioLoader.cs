@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using DiscJockey.Audio.ContentProviders;
 using DiscJockey.Audio.ContentProviders.Base;
 using DiscJockey.Audio.Utils;
+using UnityEngine;
 using YoutubeDLSharp;
 using YoutubeDLSharp.Metadata;
 using YoutubeDLSharp.Options;
@@ -87,7 +88,7 @@ public class AudioLoader
     public static async void LoadAllFromCache()
     {
         if (DownloadCache?.CachedDownloads == null || DownloadCache.CachedDownloads.Count == 0) return;
-        await Task.WhenAll(DownloadCache.CachedDownloads.Select(cd => LoadAudioClipFromDisk(cd.Filepath, cd.Title)).ToArray());
+        await Task.WhenAll(DownloadCache.CachedDownloads.Select(cd => LoadAudioFromDisk(cd.Filepath, cd.Title)).ToArray());
     }
 
     public static async void LoadAudioClipsFromDirectory(string directory)
@@ -100,13 +101,18 @@ public class AudioLoader
 
         var files = Directory.GetFiles(directory);
 
-        await Task.WhenAll(files.Select(file => LoadAudioClipFromDisk(file, Path.GetFileNameWithoutExtension(file))).ToArray());
+        await Task.WhenAll(files.Select(file => LoadAudioFromDisk(file, Path.GetFileNameWithoutExtension(file))).ToArray());
         OnLoadAllAudioFromDirectoryCompleted?.Invoke();
     }
 
-    
+    public static void ConvertAudioClipToCachedAudio(AudioClip audioClip)
+    {
+        OnLoadAudioStarted?.Invoke(audioClip.name);
+        var audio = CachedAudio.FromAudioClip(audioClip);
+        OnLoadAudioCompleted?.Invoke(audio);
+    }
 
-    public static async Task LoadAudioClipFromDisk(string filePath, string clipNameOverride = default)
+    public static async Task LoadAudioFromDisk(string filePath, string clipNameOverride = default)
     {
         OnLoadAudioStarted?.Invoke(filePath);
 
@@ -153,7 +159,7 @@ public class AudioLoader
         {
             var cachedDownload = DownloadCache.GetDownloadFromCache(uri.Id);
             DiscJockeyPlugin.LogInfo($"{contentTitle} exists in our cache");
-            await LoadAudioClipFromDisk(cachedDownload.Filepath, cachedDownload.Title);
+            await LoadAudioFromDisk(cachedDownload.Filepath, cachedDownload.Title);
             OnAudioDownloadCompleted?.Invoke(uri.Url);
         }
         else
@@ -162,7 +168,7 @@ public class AudioLoader
             var result = await provider.Download(YouTubeDownloader, uri, onProgress);
             if (result.Success)
             {
-                await LoadAudioClipFromDisk(result.Data, contentTitle);
+                await LoadAudioFromDisk(result.Data, contentTitle);
                 DownloadCache.AddToCache(new CachedDownload(uri.Id, contentTitle, result.Data));
                 OnAudioDownloadCompleted?.Invoke(uri.Url);
             }
@@ -250,7 +256,7 @@ public class AudioLoader
         if (DownloadCache.IdExistsInCache(videoDataResult.Data.ID))
         {
             var cachedDownload = DownloadCache.GetDownloadFromCache(videoDataResult.Data.ID);
-            await LoadAudioClipFromDisk(cachedDownload.Filepath,
+            await LoadAudioFromDisk(cachedDownload.Filepath,
                 cachedDownload.Title);
             OnAudioDownloadCompleted?.Invoke(url);
         }
@@ -266,7 +272,7 @@ public class AudioLoader
             if (result.Success)
             {
                 var title = Sanitize(videoDataResult.Data.Title);
-                await LoadAudioClipFromDisk(result.Data, title);
+                await LoadAudioFromDisk(result.Data, title);
                 DownloadCache.AddToCache(new CachedDownload(videoDataResult.Data.ID, title, result.Data));
 
                 OnAudioDownloadCompleted?.Invoke(url);
