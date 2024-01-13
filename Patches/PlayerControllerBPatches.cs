@@ -41,10 +41,10 @@ internal class PlayerControllerBPatches
     }
 
     [HarmonyPatch(typeof(PlayerControllerB), "SetHoverTipAndCurrentInteractTrigger")]
-    [HarmonyPostfix]
+    [HarmonyPrefix]
     private static void HoverTipPrefixPatch(PlayerControllerB __instance)
     {
-        if (!__instance.isGrabbingObjectAnimation && !__instance.isHoldingObject && !__instance.inSpecialInteractAnimation && !__instance.inTerminalMenu)
+        if (!__instance.isGrabbingObjectAnimation && __instance.currentlyHeldObjectServer == null && !__instance.inSpecialInteractAnimation && !__instance.inTerminalMenu)
         {
             __instance.interactRay = new Ray(__instance.gameplayCamera.transform.position, __instance.gameplayCamera.transform.forward);
             if (Physics.Raycast(__instance.interactRay, out __instance.hit, __instance.grabDistance, __instance.interactableObjectsMask) && __instance.hit.collider.gameObject.layer != 8)
@@ -53,6 +53,8 @@ internal class PlayerControllerBPatches
                 {
                     if (__instance.hit.collider.gameObject.TryGetComponent<BoomboxItem>(out var boombox))
                     {
+                        boombox.customGrabTooltip = boombox.isHeld ? InputManager.OpenDiscJockeyTooltip : $"Grab Boombox:  [E]\n{InputManager.OpenDiscJockeyTooltip}";
+                        
                         BoomboxManager.OnLookedAtBoombox(boombox);
                         return;
                     }

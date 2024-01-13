@@ -35,14 +35,12 @@ internal class GrabbableObjectPatches
     {
         if (__instance is BoomboxItem)
         {
-            if (enable)
+            if (!enable)
             {
-                __instance.customGrabTooltip = $"Grab Boombox:  [E]\n{InputManager.OpenDiscJockeyTooltip}";
-            }
-            else
-            {
-                __instance.customGrabTooltip = InputManager.OpenDiscJockeyTooltip;
-                return false;
+                if (!__instance.IsOwner)
+                {
+                    return false;
+                }
             }
         }
 

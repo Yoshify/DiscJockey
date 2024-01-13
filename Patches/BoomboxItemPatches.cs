@@ -25,11 +25,6 @@ internal class BoomboxItemPatches
         if (!__instance.itemProperties.toolTips.Contains(InputManager.OpenDiscJockeyTooltip))
             __instance.itemProperties.toolTips = __instance.itemProperties.toolTips.AddItem(InputManager.OpenDiscJockeyTooltip).ToArray();
 
-        if (!__instance.customGrabTooltip.Contains(InputManager.OpenDiscJockeyTooltip))
-        {
-            __instance.customGrabTooltip = $"Grab Boombox:  [E]\n{InputManager.OpenDiscJockeyTooltip}";
-        }
-
         if (DiscJockeyConfig.LocalConfig.AddVanillaSongsToTracklist)
         {
             AudioManager.LoadVanillaMusicFrom(__instance);
