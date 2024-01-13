@@ -16,43 +16,37 @@ public static class BoomboxManager
     public static bool IsLookingAtBoombox => LookedAtBoombox != null;
     public static bool IsHoldingBoombox => HeldBoombox != null;
 
-    public static bool HeldBoomboxIsNot(ulong networkedBoomboxId)
+    public static bool LookedAtOrHeldBoomboxIsNot(ulong networkedBoomboxId)
     {
-        if (!IsLookingAtOrHoldingBoombox)
-        {
-            return false;
-        }
-
+        if (!IsLookingAtOrHoldingBoombox) return false;
         return LookedAtOrHeldBoombox.NetworkedBoomboxId != networkedBoomboxId;
     }
 
-    public static void EnableInteractionWithBoombox(ulong boomboxNetworkId)
+    public static void OnHeldBoombox(ulong boomboxNetworkId)
     {
-        DiscJockeyPlugin.LogInfo("DiscJockeyBoomboxManager<EnableInteractionWithBoombox>: Enabling interaction");
+        DiscJockeyPlugin.LogInfo($"DiscJockeyBoomboxManager<OnHeldBoombox>: Now holding Boombox {boomboxNetworkId}");
         if (DJNetworkManager.Boomboxes.TryGetValue(boomboxNetworkId, out var networkedBoombox))
             HeldBoombox = networkedBoombox;
     }
 
-    public static void DisableInteraction()
+    public static void OnDroppedBoombox()
     {
-        if (!IsLookingAtOrHoldingBoombox) return;
+        if (!IsHoldingBoombox) return;
 
-        DiscJockeyPlugin.LogInfo("DiscJockeyBoomboxManager<DisableInteraction>: Disabling interaction");
+        DiscJockeyPlugin.LogInfo($"DiscJockeyBoomboxManager<OnDroppedBoombox>: Dropped {HeldBoombox.NetworkedBoomboxId}");
         HeldBoombox = null;
     }
 
     public static void OnLookedAtBoombox(BoomboxItem boomboxItem)
     {
-
-        boomboxItem.customGrabTooltip =
-            $"{OriginalBoomboxGrabTip}\n{InputManager.OpenDiscJockeyTooltip}";
         if (DJNetworkManager.Boomboxes.TryGetValue(boomboxItem.NetworkObjectId, out var networkedBoombox))
             LookedAtBoombox = networkedBoombox;
     }
 
     public static void OnLookedAwayFromBoombox()
     {
-        LookedAtBoombox.Boombox.customGrabTooltip = OriginalBoomboxGrabTip;
+        if (!IsLookingAtBoombox) return;
+        
         LookedAtBoombox = null;
     }
 }

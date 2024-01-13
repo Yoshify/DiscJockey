@@ -60,7 +60,8 @@ internal class GameNetworkManagerPatches
             }
         }
         
-        BoomboxManager.DisableInteraction();
+        BoomboxManager.OnDroppedBoombox();
+        BoomboxManager.OnLookedAwayFromBoombox();
         InputManager.EnablePlayerInteractions();
         DiscJockeyConfig.RevertSync();
 
