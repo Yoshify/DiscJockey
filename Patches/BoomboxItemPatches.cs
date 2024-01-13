@@ -25,6 +25,16 @@ internal class BoomboxItemPatches
         if (!__instance.itemProperties.toolTips.Contains(InputManager.OpenDiscJockeyTooltip))
             __instance.itemProperties.toolTips = __instance.itemProperties.toolTips.AddItem(InputManager.OpenDiscJockeyTooltip).ToArray();
 
+        if (!__instance.customGrabTooltip.Contains(InputManager.OpenDiscJockeyTooltip))
+        {
+            __instance.customGrabTooltip = $"Grab Boombox:  [E]\n{InputManager.OpenDiscJockeyTooltip}";
+        }
+
+        if (DiscJockeyConfig.LocalConfig.AddVanillaSongsToTracklist)
+        {
+            AudioManager.LoadVanillaMusicFrom(__instance);
+        }
+
         if (DiscJockeyConfig.SyncedConfig.DisableBatteryDrain) __instance.itemProperties.batteryUsage = int.MaxValue;
     }
 
@@ -84,6 +94,6 @@ internal class BoomboxItemPatches
     private static void PocketItemPatch(BoomboxItem __instance)
     {
         if (__instance.IsOwner && BoomboxManager.IsLookingAtOrHoldingBoombox)
-            BoomboxManager.DisableInteraction();
+            BoomboxManager.OnDroppedBoombox();
     }
 }

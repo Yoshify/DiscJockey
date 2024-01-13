@@ -1,4 +1,5 @@
 ﻿using DiscJockey.Audio;
+using DiscJockey.Input;
 using DiscJockey.Managers;
 using DiscJockey.Utils;
 using GameNetcodeStuff;
@@ -40,22 +41,28 @@ internal class PlayerControllerBPatches
     }
 
     [HarmonyPatch(typeof(PlayerControllerB), "SetHoverTipAndCurrentInteractTrigger")]
-    [HarmonyPrefix]
+    [HarmonyPostfix]
     private static void HoverTipPrefixPatch(PlayerControllerB __instance)
     {
-        if (!__instance.isGrabbingObjectAnimation)
+        if (!__instance.isGrabbingObjectAnimation && !__instance.isHoldingObject && !__instance.inSpecialInteractAnimation && !__instance.inTerminalMenu)
         {
-            __instance.interactRay = new Ray(__instance.gameplayCamera.transform.position,
-                __instance.gameplayCamera.transform.forward);
-            if (Physics.Raycast(__instance.interactRay, out __instance.hit, __instance.grabDistance,
-                    __instance.grabbableObjectsMask) && __instance.hit.collider.gameObject.layer != 8)
+            __instance.interactRay = new Ray(__instance.gameplayCamera.transform.position, __instance.gameplayCamera.transform.forward);
+            if (Physics.Raycast(__instance.interactRay, out __instance.hit, __instance.grabDistance, __instance.interactableObjectsMask) && __instance.hit.collider.gameObject.layer != 8)
+            {
                 if (__instance.hit.collider.gameObject.name.Contains("Boombox"))
+                {
                     if (__instance.hit.collider.gameObject.TryGetComponent<BoomboxItem>(out var boombox))
                     {
                         BoomboxManager.OnLookedAtBoombox(boombox);
                         return;
                     }
-            if (!UIManager.Instance.UIPanelActive && BoomboxManager.IsLookingAtBoombox) BoomboxManager.OnLookedAwayFromBoombox();
+                }
+            }
+
+            if (!UIManager.Instance.UIPanelActive && BoomboxManager.IsLookingAtBoombox)
+            {
+                BoomboxManager.OnLookedAwayFromBoombox();
+            }
         }
     }
 }
