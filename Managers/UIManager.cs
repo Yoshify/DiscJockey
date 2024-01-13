@@ -120,7 +120,7 @@ public class UIManager : MonoBehaviour
 
     private void OnVolumeChanged(ulong networkedBoomboxId, float volume)
     {
-        if (BoomboxManager.HeldBoomboxIsNot(networkedBoomboxId))
+        if (BoomboxManager.LookedAtOrHeldBoomboxIsNot(networkedBoomboxId))
         {
             return;
         }
@@ -149,7 +149,7 @@ public class UIManager : MonoBehaviour
     private void OnAudioPlaybackStarted(ulong senderClientId, ulong networkedBoomboxId, TrackMetadata trackMetadata,
         AudioFormat audioFormat)
     {
-        if (BoomboxManager.HeldBoomboxIsNot(networkedBoomboxId))
+        if (BoomboxManager.LookedAtOrHeldBoomboxIsNot(networkedBoomboxId))
         {
             return;
         }
@@ -167,7 +167,7 @@ public class UIManager : MonoBehaviour
 
     private void OnAudioPlaybackStopped(ulong senderClientId, ulong networkedBoomboxId)
     {
-        if (BoomboxManager.HeldBoomboxIsNot(networkedBoomboxId))
+        if (BoomboxManager.LookedAtOrHeldBoomboxIsNot(networkedBoomboxId))
         {
             return;
         }
