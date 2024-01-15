@@ -5,7 +5,6 @@ namespace DiscJockey.Managers;
 
 public static class BoomboxManager
 {
-    private const string OriginalBoomboxGrabTip = "Grab boombox:  [E]";
     public static NetworkedBoombox HeldBoombox;
     public static NetworkedBoombox LookedAtBoombox;
 

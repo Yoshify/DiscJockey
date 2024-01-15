@@ -14,8 +14,8 @@ public class NetworkedBoombox
     private const int FrameSizeMs = 20;
     private readonly NetworkedAudioReceiver _networkedAudioReceiver;
     private readonly NetworkedAudioSender _networkedAudioSender;
-    private AudioFormat? _streamedAudioFormat;
-    private TrackMetadata? _streamedTrackMetadata;
+    public AudioFormat? ActiveAudioFormat { get; private set; }
+    public TrackMetadata? ActiveTrackMetadata { get; private set; }
 
     public BoomboxItem Boombox;
     public BoomboxPlaybackMode BoomboxPlaybackMode = BoomboxPlaybackMode.Sequential;
@@ -38,13 +38,12 @@ public class NetworkedBoombox
     }
 
     public ulong NetworkedBoomboxId => Boombox.NetworkObjectId;
-
-    public float CurrentTrackLength => _streamedTrackMetadata?.LengthInSeconds ?? 0;
+    public float CurrentTrackLength => ActiveTrackMetadata?.LengthInSeconds ?? 0;
     public float CurrentTrackProgress => _networkedAudioReceiver.Time;
-    public int CurrentTrackIndexInOwnersTracklist => _streamedTrackMetadata?.IndexInOwnersTracklist ?? 0;
+    public int CurrentTrackIndexInOwnersTracklist => ActiveTrackMetadata?.IndexInOwnersTracklist ?? 0;
 
-    public bool LocalClientOwnsCurrentTrack => _streamedTrackMetadata.HasValue &&
-                                               _streamedTrackMetadata.Value.OwnerId ==
+    public bool LocalClientOwnsCurrentTrack => ActiveTrackMetadata.HasValue &&
+                                               ActiveTrackMetadata.Value.OwnerId ==
                                                LocalPlayerHelper.Player.playerClientId;
 
     public bool IsPlaying => _networkedAudioReceiver.IsPlaying;
@@ -89,8 +88,8 @@ public class NetworkedBoombox
 
         if (senderClientId != LocalPlayerHelper.Player.playerClientId)
         {
-            _streamedTrackMetadata = trackMetadata;
-            _streamedAudioFormat = audioFormat;
+            ActiveTrackMetadata = trackMetadata;
+            ActiveAudioFormat = audioFormat;
         }
 
         DiscJockeyPlugin.LogInfo("NetworkedBoombox<OnAudioStreamStarted>: Starting playback loop.");
@@ -132,12 +131,12 @@ public class NetworkedBoombox
 
     private void SendFrame(byte[] frame)
     {
-        if (!_streamedTrackMetadata.HasValue || !_streamedAudioFormat.HasValue || frame == null) return;
+        if (!ActiveTrackMetadata.HasValue || !ActiveAudioFormat.HasValue || frame == null) return;
         
         DJNetworkManager.Instance.SendAudioPacketServerRpc(NetworkedBoomboxId, new NetworkedAudioPacket(
             frame,
-            _streamedTrackMetadata.Value,
-            _streamedAudioFormat.Value
+            ActiveTrackMetadata.Value,
+            ActiveAudioFormat.Value
         ));
     }
 
@@ -145,21 +144,21 @@ public class NetworkedBoombox
     {
         DiscJockeyPlugin.LogInfo($"NetworkedBoombox<StartStreamingTrack>: Requested stream for {track.Audio.Name}");
         
-        _streamedTrackMetadata = track.ExtractMetadata();
-        _streamedAudioFormat = new AudioFormat(SampleRate, FrameSizeMs, track.Audio.Format.Channels);
+        ActiveTrackMetadata = track.ExtractMetadata();
+        ActiveAudioFormat = new AudioFormat(SampleRate, FrameSizeMs, track.Audio.Format.Channels);
         
-        if (!_networkedAudioSender.CurrentAudioFormat.Equals(_streamedAudioFormat.Value))
+        if (!_networkedAudioSender.CurrentAudioFormat.Equals(ActiveAudioFormat.Value))
         {
             DiscJockeyPlugin.LogInfo(
                 "NetworkedBoombox<StartStreamingTrack>: Streamed AudioFormat differs to our sender, updating and resetting encoder");
-            _networkedAudioSender.UpdateAudioFormat(_streamedAudioFormat.Value);
+            _networkedAudioSender.UpdateAudioFormat(ActiveAudioFormat.Value);
         }
 
         DiscJockeyPlugin.LogInfo(
-            "NetworkedBoombox<StartStreamingTrack>: Starting stream.");
+            $"NetworkedBoombox<StartStreamingTrack>: Player {LocalPlayerHelper.Player.playerClientId} is starting a stream");
         _networkedAudioSender.StartStreaming(track.Audio);
-        NotifyStreamStarted(LocalPlayerHelper.Player.playerClientId, NetworkedBoomboxId, _streamedTrackMetadata.Value,
-            _streamedAudioFormat.Value);
+        NotifyStreamStarted(LocalPlayerHelper.Player.playerClientId, NetworkedBoomboxId, ActiveTrackMetadata.Value,
+            ActiveAudioFormat.Value);
     }
 
     public void StopPlaybackLocally()

@@ -18,7 +18,6 @@ internal class BoomboxItemPatches
     {
         DiscJockeyPlugin.LogInfo("BoomboxItemPatches<StartPatch>: Registering Boombox");
         DJNetworkManager.Instance.RegisterBoomboxServerRpc(__instance.NetworkObjectId);
-        DiscJockeyPlugin.LogInfo("BoomboxItemPatches<StartPatch>: Assigning tooltip");
         __instance.itemProperties.canBeGrabbedBeforeGameStart = true;
 
         if (!__instance.itemProperties.toolTips.Contains(InputManager.OpenDiscJockeyTooltip))
@@ -38,38 +37,39 @@ internal class BoomboxItemPatches
     [HarmonyPrefix]
     public static bool StartMusicPatch(bool startMusic, BoomboxItem __instance)
     {
-        DiscJockeyPlugin.LogInfo($"BoomboxItemPatches<StartMusicPatch>: Called, startMusic is {startMusic}");
-
-        if (!AudioManager.IsReady() || !BoomboxManager.IsLookingAtOrHoldingBoombox) return false;
-
-        DiscJockeyPlugin.LogInfo("BoomboxItemPatches<StartMusicPatch>: DiscJockeyAudioManager ready");
+        if (!AudioManager.IsReady() || !__instance.IsOwner || !DJNetworkManager.Boomboxes.TryGetValue(__instance.NetworkObjectId, out var networkedBoombox)) return false;
+        
         if (startMusic)
         {
-            if (BoomboxManager.LookedAtOrHeldBoombox.IsPlaying ||
-                BoomboxManager.LookedAtOrHeldBoombox.IsStreaming)
+            if (networkedBoombox.IsPlaying || networkedBoombox.IsStreaming)
             {
-                DiscJockeyPlugin.LogInfo("BoomboxItemPatches<StartMusicPatch>: Stop Music requested");
-                AudioManager.RequestStopTrack();
+                DiscJockeyPlugin.LogInfo("BoomboxItemPatches<StartMusicPatch>: Stop music requested");
+                networkedBoombox.StopStreamAndPlaybackAndNotify();
             }
             else
             {
                 if (AudioManager.TrackList.HasAnyTracks)
                 {
-                    DiscJockeyPlugin.LogInfo(
-                        "BoomboxItemPatches<StartMusicPatch>: Start Music requested, requesting random track");
-                    var randomTrack = AudioManager.TrackList.GetRandomTrack();
-                    AudioManager.RequestPlayTrack(randomTrack);
+                    if (networkedBoombox.ActiveTrackMetadata.HasValue && networkedBoombox.LocalClientOwnsCurrentTrack)
+                    {
+                        DiscJockeyPlugin.LogInfo(
+                            "BoomboxItemPatches<StartMusicPatch>: Start music requested, we own the current or previous track, requesting next track");
+                        networkedBoombox.StartStreamingTrack(AudioManager.TrackList.GetNextTrack(networkedBoombox.CurrentTrackIndexInOwnersTracklist, networkedBoombox.BoomboxPlaybackMode));
+                    }
+                    else
+                    {
+                        DiscJockeyPlugin.LogInfo("BoomboxItemPatches<StartMusicPatch>: Start music requested, we don't own the current or previous track, requesting first track in our list");
+                        var firstTrack = AudioManager.TrackList.GetTrackAtIndex(0);
+                        networkedBoombox.StartStreamingTrack(firstTrack);
+                    }
                 }
             }
         }
         else
         {
-            DiscJockeyPlugin.LogInfo("BoomboxItem<StartMusic>: Stop Music requested");
-            AudioManager.RequestStopTrack();
+            DiscJockeyPlugin.LogInfo("BoomboxItem<StartMusicPatch>: Stop music requested");
+            networkedBoombox.StopStreamAndPlaybackAndNotify();
         }
-
-        __instance.isBeingUsed = startMusic;
-        __instance.isPlayingMusic = startMusic;
 
         return false;
     }
