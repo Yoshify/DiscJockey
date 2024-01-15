@@ -23,7 +23,7 @@ public class NetworkedBehaviourPatches
                     BoomboxManager.LookedAtOrHeldBoombox.StopStreamAndPlaybackAndNotify();    
                 }
                 
-                BoomboxManager.OnDroppedBoombox();
+                BoomboxManager.OnDroppedOrPocketedBoombox();
                 BoomboxManager.OnLookedAwayFromBoombox();
             }
             

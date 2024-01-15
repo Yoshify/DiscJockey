@@ -3,7 +3,6 @@ using System.Linq;
 using System.Reflection.Emit;
 using DiscJockey.Audio;
 using DiscJockey.Input;
-using DiscJockey.Input.Utils;
 using DiscJockey.Managers;
 using HarmonyLib;
 using UnityEngine;
@@ -24,6 +23,8 @@ internal class BoomboxItemPatches
 
         if (!__instance.itemProperties.toolTips.Contains(InputManager.OpenDiscJockeyTooltip))
             __instance.itemProperties.toolTips = __instance.itemProperties.toolTips.AddItem(InputManager.OpenDiscJockeyTooltip).ToArray();
+
+        
 
         if (DiscJockeyConfig.LocalConfig.AddVanillaSongsToTracklist)
         {
@@ -88,7 +89,7 @@ internal class BoomboxItemPatches
     [HarmonyPostfix]
     private static void PocketItemPatch(BoomboxItem __instance)
     {
-        if (__instance.IsOwner && BoomboxManager.IsLookingAtOrHoldingBoombox)
-            BoomboxManager.OnDroppedBoombox();
+        if (__instance.IsOwner && BoomboxManager.IsHoldingBoombox)
+            BoomboxManager.OnDroppedOrPocketedBoombox();
     }
 }

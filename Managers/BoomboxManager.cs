@@ -29,7 +29,7 @@ public static class BoomboxManager
             HeldBoombox = networkedBoombox;
     }
 
-    public static void OnDroppedBoombox()
+    public static void OnDroppedOrPocketedBoombox()
     {
         if (!IsHoldingBoombox) return;
 
