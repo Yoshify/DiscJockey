@@ -1,6 +1,7 @@
 ﻿using LethalCompanyInputUtils.Api;
 using UnityEngine.InputSystem;
 
+
 namespace DiscJockey.Input;
 
 public class InputUtilsKeybinds : LcInputActions

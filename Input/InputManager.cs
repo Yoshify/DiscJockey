@@ -1,5 +1,4 @@
-﻿using DiscJockey.Input.Utils;
-using DiscJockey.Managers;
+﻿using DiscJockey.Managers;
 using DiscJockey.Utils;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -101,8 +100,8 @@ public static class InputManager
     }
     
     public static string GetOpenDiscJockeyBindingString() => InputUtilsCompatibility.Enabled
-        ? InputUtilsCompatibility.OpenDiscJockeyHotkey.bindings[0].path.RawKeyFromInputBinding()
-        : DiscJockeyConfig.LocalConfig.DiscJockeyPanelHotkey.RawKeyFromInputBinding();
+        ? InputControlPath.ToHumanReadableString(InputUtilsCompatibility.OpenDiscJockeyHotkey.bindings[0].effectivePath, InputControlPath.HumanReadableStringOptions.OmitDevice)
+        : InputControlPath.ToHumanReadableString(DiscJockeyConfig.LocalConfig.DiscJockeyPanelHotkey, InputControlPath.HumanReadableStringOptions.OmitDevice);
 
     private static void ExecuteUIToggleAction(InputAction.CallbackContext ctx)
     {
@@ -111,6 +110,7 @@ public static class InputManager
 
     public static void Init()
     {
+        
         if (_hasInitialized) return;
         SetupKeybinds();
         _hasInitialized = true;
