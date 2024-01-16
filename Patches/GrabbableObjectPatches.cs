@@ -1,4 +1,5 @@
-﻿using DiscJockey.Input;
+﻿using System.Linq;
+using DiscJockey.Input;
 using DiscJockey.Managers;
 using HarmonyLib;
 
@@ -15,6 +16,16 @@ internal class GrabbableObjectPatches
         {
             BoomboxManager.OnHeldBoombox(boombox.NetworkObjectId);
             
+            // TODO: This is a workaround to update controlTips on the Boombox with the latest keybinds
+            // until we get a rebind event/callback out of InputUtils
+            
+            // Our tooltip should always be the last on the stack, so pop it off...
+            var toolTips = boombox.itemProperties.toolTips.ToList();
+            toolTips.RemoveAt(toolTips.Count - 1);
+            
+            // ...and add the latest
+            toolTips.Add(InputManager.OpenDiscJockeyTooltip);
+            boombox.itemProperties.toolTips = toolTips.ToArray();
         }
     }
 
