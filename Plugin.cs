@@ -12,6 +12,7 @@ using DiscJockey.Utils;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.LowLevel;
+using System.Net.Http;
 
 namespace DiscJockey;
 
