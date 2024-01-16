@@ -53,7 +53,6 @@ public static class InputManager
         EnableMouse();
         EnablePlayerLook();
         EnableInput("Look");
-        EnableInput("Interact");
         EnableInput("Use");
         EnableInput("EnableChat");
         EnableInput("ActivateItem");
@@ -68,7 +67,6 @@ public static class InputManager
         DisableMouse();
         DisablePlayerLook();
         DisableInput("Look");
-        DisableInput("Interact");
         DisableInput("Use");
         DisableInput("EnableChat");
         DisableInput("ActivateItem");

@@ -6,19 +6,13 @@ using GameNetcodeStuff;
 using HarmonyLib;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace DiscJockey.Patches;
 
 [HarmonyPatch(typeof(PlayerControllerB))]
 internal class PlayerControllerBPatches
 {
-    [HarmonyPatch(typeof(PlayerControllerB), "Start")]
-    [HarmonyPostfix]
-    private static void StartPatch(PlayerControllerB __instance)
-    {
-        LocalPlayerHelper.TrySetLocalPlayer(__instance);
-    }
-
     [HarmonyPostfix]
     [HarmonyPatch(typeof(PlayerControllerB), "ConnectClientToPlayerObject")]
     public static void ConnectClientToPlayerObjectPatch(PlayerControllerB __instance)
@@ -44,7 +38,7 @@ internal class PlayerControllerBPatches
     [HarmonyPrefix]
     private static void HoverTipPrefixPatch(PlayerControllerB __instance)
     {
-        if (!__instance.isGrabbingObjectAnimation && __instance.currentlyHeldObjectServer == null && !__instance.inSpecialInteractAnimation && !__instance.inTerminalMenu)
+        if (!__instance.isGrabbingObjectAnimation && !__instance.inSpecialInteractAnimation && !__instance.inTerminalMenu)
         {
             __instance.interactRay = new Ray(__instance.gameplayCamera.transform.position, __instance.gameplayCamera.transform.forward);
             if (Physics.Raycast(__instance.interactRay, out __instance.hit, __instance.grabDistance, __instance.interactableObjectsMask) && __instance.hit.collider.gameObject.layer != 8)
@@ -54,7 +48,6 @@ internal class PlayerControllerBPatches
                     if (__instance.hit.collider.gameObject.TryGetComponent<BoomboxItem>(out var boombox))
                     {
                         boombox.customGrabTooltip = boombox.isHeld ? InputManager.OpenDiscJockeyTooltip : $"Grab Boombox:  [E]\n{InputManager.OpenDiscJockeyTooltip}";
-                        
                         BoomboxManager.OnLookedAtBoombox(boombox);
                         return;
                     }
@@ -66,5 +59,12 @@ internal class PlayerControllerBPatches
                 BoomboxManager.OnLookedAwayFromBoombox();
             }
         }
+    }
+
+    [HarmonyPatch(typeof(PlayerControllerB), "Interact_performed")]
+    [HarmonyPrefix]
+    private static bool InteractPerformedPrefixPatch(PlayerControllerB __instance)
+    {
+        return !UIManager.Instance.UIPanelActive;
     }
 }
