@@ -18,7 +18,15 @@ namespace YoutubeDLSharp;
 /// </summary>
 public static class Utils
 {
-    private static readonly HttpClient _client = new();
+    private static HttpClient _client;
+
+    // With UseCookies we'll get Illegal Byte Sequence exceptions thrown on request, all of which goes away if we set UseCookies to false.
+    // We don't need cookies anyway, we're just firing and forgetting a download request.
+    private static HttpClient Client =>
+        _client ??= new HttpClient(new HttpClientHandler
+        {
+            UseCookies = false
+        });
 
     private static readonly Regex rgxTimestamp = new("[0-9]+(?::[0-9]+)+", RegexOptions.Compiled);
 
@@ -277,8 +285,6 @@ public static class Utils
                                 true);
                     }
                 }
-
-                ;
             }
             else
             {
@@ -293,8 +299,8 @@ public static class Utils
         if (!Uri.TryCreate(uri, UriKind.Absolute, out var _))
             throw new InvalidOperationException("URI is invalid.");
 
-        var fileBytes = await _client.GetByteArrayAsync(uri);
-        return fileBytes;
+        var bytes = await Client.GetByteArrayAsync(uri);
+        return bytes;
     }
 
 
