@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Threading;
 using DiscJockey.Data;
+using DiscJockey.Events;
 using DiscJockey.Managers;
 using DiscJockey.Utils;
 using TMPro;
@@ -55,8 +56,8 @@ public class TrackListButton : MonoBehaviour, IPointerEnterHandler, IPointerExit
     {
         _trackNameScrollRoutineCancellationSource = new CancellationTokenSource();
         TrackIndicatorText.horizontalAlignment = HorizontalAlignmentOptions.Left;
-        DJNetworkManager.OnAudioStreamTransmitStarted += OnPlaybackStarted;
-        DJNetworkManager.OnAudioStreamPlaybackStopped += OnPlaybackStopped;
+        DJNetworkManager.OnStreamStarted += OnStreamStarted;
+        DJNetworkManager.OnStreamStopped += OnStreamStopped;
         TrackButton.onClick.AddListener(RequestPlayTrack);
         AddTrackSaveButton.onClick.AddListener(StartDownload);
         DeleteButton.onClick.AddListener(OnDelete);
@@ -74,19 +75,18 @@ public class TrackListButton : MonoBehaviour, IPointerEnterHandler, IPointerExit
         Destroy(gameObject);
     }
 
-    private void OnPlaybackStopped(ulong senderClientId, ulong networkedBoomboxId)
+    private void OnStreamStopped(StreamStoppedEventArgs streamStoppedEventArgs)
     {
         if (_buttonState == ButtonState.Playing) SetButtonState(ButtonState.Default);
     }
 
-    private void OnPlaybackStarted(ulong senderClientId, ulong networkedBoomboxId,
-        TrackMetadata trackMetadata, AudioFormat audioFormat)
+    private void OnStreamStarted(StreamStartedEventArgs streamStartedEventArgs)
     {
-        if (trackMetadata.Id == Track.Id && _buttonState == ButtonState.Default)
+        if (streamStartedEventArgs.StreamInformation.TrackMetadata.Id == Track.Id && _buttonState == ButtonState.Default)
         {
             SetButtonState(ButtonState.Playing);
         }
-        else if (trackMetadata.Id != Track.Id && _buttonState == ButtonState.Playing)
+        else if (streamStartedEventArgs.StreamInformation.TrackMetadata.Id != Track.Id && _buttonState == ButtonState.Playing)
         {
             SetButtonState(ButtonState.Default);
         }
@@ -99,7 +99,8 @@ public class TrackListButton : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
     private void OnDestroy()
     {
-        DJNetworkManager.OnAudioStreamTransmitStarted -= OnPlaybackStarted;
+        DJNetworkManager.OnStreamStarted -= OnStreamStarted;
+        DJNetworkManager.OnStreamStopped -= OnStreamStopped;
         OnDestroyed?.Invoke();
         RemoveDownloadEventListeners();
     }
@@ -141,7 +142,6 @@ public class TrackListButton : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
     private void OnDownloadTitleResolutionCompleted(string url, string title)
     {
-        DiscJockeyPlugin.LogInfo($"OnDownloadTitleResolutionCompleted: Our URL {_activeDownloadUrl} - received {url}");
         if (url != _activeDownloadUrl) return;
         SetTrackText(title);
     }
@@ -155,7 +155,6 @@ public class TrackListButton : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
     private void OnDownloadCompleted(string url)
     {
-        DiscJockeyPlugin.LogInfo($"OnDownloadCompleted: Our URL {_activeDownloadUrl} - received {url}");
         if (url != _activeDownloadUrl) return;
         _activeDownloadUrl = null;
         Destroy(gameObject);
@@ -195,7 +194,6 @@ public class TrackListButton : MonoBehaviour, IPointerEnterHandler, IPointerExit
     public void SetButtonState(ButtonState buttonState)
     {
         _buttonState = buttonState;
-        DiscJockeyPlugin.LogInfo($"TrackListButton<SetButtonState>: Updating Button State to {buttonState}");
         switch (_buttonState)
         {
             case ButtonState.Default:

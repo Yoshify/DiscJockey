@@ -23,7 +23,7 @@ public static class BoomboxManager
 
     public static void OnHeldBoombox(ulong boomboxNetworkId)
     {
-        DiscJockeyPlugin.LogInfo($"DiscJockeyBoomboxManager<OnHeldBoombox>: Now holding Boombox {boomboxNetworkId}");
+        DiscJockeyPlugin.LogInfo($"Now holding Boombox {boomboxNetworkId}");
         if (DJNetworkManager.Boomboxes.TryGetValue(boomboxNetworkId, out var networkedBoombox))
             HeldBoombox = networkedBoombox;
     }
@@ -32,7 +32,7 @@ public static class BoomboxManager
     {
         if (!IsHoldingBoombox) return;
 
-        DiscJockeyPlugin.LogInfo($"DiscJockeyBoomboxManager<OnDroppedBoombox>: Dropped {HeldBoombox.NetworkedBoomboxId}");
+        DiscJockeyPlugin.LogInfo($"Dropped Boombox {HeldBoombox.NetworkedBoomboxId}");
         HeldBoombox = null;
     }
 

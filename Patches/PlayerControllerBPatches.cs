@@ -17,20 +17,20 @@ internal class PlayerControllerBPatches
     [HarmonyPatch(typeof(PlayerControllerB), "ConnectClientToPlayerObject")]
     public static void ConnectClientToPlayerObjectPatch(PlayerControllerB __instance)
     {
-        AudioManager.TrackList.TakeOwnershipOfTracklist(__instance.playerClientId,
-            GameUtils.GetPlayerName(__instance.playerClientId));
+        AudioManager.TrackList.TakeOwnershipOfTracklist(
+            __instance.playerClientId,
+            GameUtils.GetPlayerName(__instance.playerClientId)
+        );
 
         if (NetworkManager.Singleton.IsHost)
         {
-            NetworkManager.Singleton.CustomMessagingManager.RegisterNamedMessageHandler(
-                "DiscJockey_OnRequestConfigSync", DiscJockeyConfig.OnRequestSync);
+            NetworkManager.Singleton.CustomMessagingManager.RegisterNamedMessageHandler("DiscJockey_OnRequestConfigSync", DiscJockeyConfig.OnRequestSync);
             DiscJockeyConfig.Synced = true;
             return;
         }
 
         DiscJockeyConfig.Synced = false;
-        NetworkManager.Singleton.CustomMessagingManager.RegisterNamedMessageHandler("DiscJockey_OnReceiveConfigSync",
-            DiscJockeyConfig.OnReceiveSync);
+        NetworkManager.Singleton.CustomMessagingManager.RegisterNamedMessageHandler("DiscJockey_OnReceiveConfigSync", DiscJockeyConfig.OnReceiveSync);
         DiscJockeyConfig.RequestSync();
     }
 

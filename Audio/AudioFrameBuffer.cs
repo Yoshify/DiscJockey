@@ -40,7 +40,7 @@ public class AudioFrameBuffer
         if (Count > MaxFramesInBuffer)
             while (Count > MaxFramesInBuffer / 2)
             {
-                DiscJockeyPlugin.LogInfo($"BUFFER FULL. Max size is {MaxFramesInBuffer}. Dumping frames");
+                DiscJockeyPlugin.LogWarning($"Buffer full. Max size is {MaxFramesInBuffer} frames. Dumping frames.");
                 _frameBuffer.RemoveFirst();
             }
 

@@ -25,6 +25,6 @@ public class Track
 
     public override string ToString()
     {
-        return $"Track(Name<{Audio.Name}>, OwnerId<{OwnerId}>, OwnerName<{OwnerName}>";
+        return $"Track<Name({Audio.Name}), OwnerId({OwnerId}), OwnerName({OwnerName})>";
     }
 }

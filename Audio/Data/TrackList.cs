@@ -18,8 +18,7 @@ public class TrackList
     {
         foreach (var track in _trackList)
         {
-            DiscJockeyPlugin.LogInfo(
-                $"TrackList<TakeOwnershipOfTracklist>: Setting ownership of track to ID<{ownerId}>, Name<{ownerName}>");
+            DiscJockeyPlugin.LogInfo($"Player #{ownerId}: {ownerName} is taking ownership of {track.Audio.Name}");
             track.TakeOwnership(ownerId, ownerName);
         }
     }
@@ -68,8 +67,6 @@ public class TrackList
         _trackList.Remove(track);
         SortTracklist();
     }
-
-    public Track Get(int trackIndex) => _trackList[trackIndex];
 
     private int GetNextTrackIndex(int currentTrackIndex, BoomboxPlaybackMode boomboxPlaybackMode,
         bool ignoreRepeat = false)

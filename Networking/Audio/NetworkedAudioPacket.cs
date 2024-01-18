@@ -6,21 +6,18 @@ namespace DiscJockey.Networking.Audio;
 public struct NetworkedAudioPacket : INetworkSerializable
 {
     public byte[] Frame;
-    public TrackMetadata TrackMetadata;
-    public AudioFormat AudioFormat;
+    public StreamInformation StreamInformation;
 
 
-    public NetworkedAudioPacket(byte[] frame, TrackMetadata trackMetadata, AudioFormat audioFormat)
+    public NetworkedAudioPacket(byte[] frame, StreamInformation streamInformation)
     {
         Frame = frame;
-        TrackMetadata = trackMetadata;
-        AudioFormat = audioFormat;
+        StreamInformation = streamInformation;
     }
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
         serializer.SerializeValue(ref Frame);
-        TrackMetadata.NetworkSerialize(serializer);
-        AudioFormat.NetworkSerialize(serializer);
+        StreamInformation.NetworkSerialize(serializer);
     }
 }

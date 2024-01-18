@@ -18,7 +18,7 @@ public class DownloadCache
         {
             if (!File.Exists(match.Filepath))
             {
-                DiscJockeyPlugin.LogWarning("DownloadCache<IdExistsInCache>: Orphaned file in cache");
+                DiscJockeyPlugin.LogWarning("Orphaned file in cache");
                 CachedDownloads.Remove(match);
                 Save();
                 return false;
@@ -51,9 +51,9 @@ public class DownloadCache
             downloadCache._filePath = cacheFilePath;
             return downloadCache;
         }
-        catch (Exception e)
+        catch
         {
-            DiscJockeyPlugin.LogWarning($"DownloadCache<Load>: Error occurred while loading the Download Cache, resetting it.");
+            DiscJockeyPlugin.LogWarning($"Error occurred while loading the Download Cache, resetting it.");
             File.Delete(cacheFilePath);
 
             var directory = Path.GetDirectoryName(cacheFilePath);
@@ -86,7 +86,7 @@ public class DownloadCache
             }
             else
             {
-                DiscJockeyPlugin.LogWarning("DownloadCache<Clear>: Orphaned file in cache");
+                DiscJockeyPlugin.LogWarning("Orphaned file in cache");
             }
         }
         CachedDownloads.Clear();
@@ -108,7 +108,7 @@ public class DownloadCache
             {
                 if (!File.Exists(CachedDownloads[0].Filepath))
                 {
-                    DiscJockeyPlugin.LogWarning("DownloadCache<TrimCacheIfNecessary>: Orphaned file in cache");
+                    DiscJockeyPlugin.LogWarning("Orphaned file in cache");
                     CachedDownloads.RemoveAt(0);
                     continue;
                 }

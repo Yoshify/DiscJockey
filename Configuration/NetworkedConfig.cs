@@ -24,7 +24,6 @@ public class NetworkedConfig<T>
         LocalConfig = instance;
         SyncedConfig = instance;
 
-        // Ensures the size of an integer is correct for the current system.
         IntSize = sizeof(int);
     }
 
@@ -51,7 +50,7 @@ public class NetworkedConfig<T>
         }
         catch (Exception e)
         {
-            DiscJockeyPlugin.LogError($"NetworkedConfig<SerializeToBytes>: Error serializing config: {e}");
+            DiscJockeyPlugin.LogError($"Error serializing config: {e}");
             return null;
         }
     }
@@ -66,7 +65,7 @@ public class NetworkedConfig<T>
         }
         catch (Exception e)
         {
-            DiscJockeyPlugin.LogError($"NetworkedConfig<DeserializeFromBytes>: Error deserializing config: {e}");
+            DiscJockeyPlugin.LogError($"Error deserializing config: {e}");
             return default;
         }
     }

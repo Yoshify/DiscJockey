@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using NAudio.Wave;
 using UnityEngine;
@@ -29,10 +30,16 @@ public class CachedAudio
         return cachedAudio;
     }
 
-    public static async Task<CachedAudio> FromFilePath(string fileName, string name)
+    private static void NormalizeAudio(float[] data)
+    {
+        var max = data.Select(Mathf.Abs).Prepend(float.MinValue).Max();
+        for (var i = 0; i < data.Length; i++) data[i] /= max;
+    }
+
+    public static async Task<CachedAudio> FromFilePath(string filePath, string name)
     {
         var cachedAudio = new CachedAudio();
-        await using var audioFileReader = new AudioFileReader(fileName);
+        await using var audioFileReader = new AudioFileReader(filePath);
         cachedAudio.Length = (float)audioFileReader.TotalTime.TotalSeconds;
         cachedAudio.Format = audioFileReader.WaveFormat;
         cachedAudio.LengthInSamples = (int)(audioFileReader.WaveFormat.SampleRate * audioFileReader.WaveFormat.Channels * cachedAudio.Length);
@@ -41,7 +48,7 @@ public class CachedAudio
         
         if (audioFileReader.WaveFormat.SampleRate != 48000)
         {
-            DiscJockeyPlugin.LogInfo($"CachedAudio<FromFilePath>: {fileName} will be resampled to 48khz so that it's Opus compatible");
+            DiscJockeyPlugin.LogInfo($"{name} will be resampled to 48khz so that it's Opus compatible");
             var conversionFormat = new WaveFormat(48000, audioFileReader.WaveFormat.Channels);
             using var resampler = new MediaFoundationResampler(audioFileReader, conversionFormat);
             cachedAudio.Format = conversionFormat;

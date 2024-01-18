@@ -13,6 +13,7 @@ using HarmonyLib;
 using UnityEngine;
 using UnityEngine.LowLevel;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 
 namespace DiscJockey;
 
@@ -52,33 +53,32 @@ public class DiscJockeyPlugin : BaseUnityPlugin
 
         _logger = BepInEx.Logging.Logger.CreateLogSource(PluginID);
         
-        LogInfo($"DiscJockeyPlugin<Awake>: Init UniTask Loop");
+        LogInfo($"Init UniTask Loop");
         var loop = PlayerLoop.GetCurrentPlayerLoop();
         PlayerLoopHelper.Initialize(ref loop);
         
-        LogInfo("DiscJockeyPlugin<Awake>: Loading AssetBundle");
+        LogInfo("Loading AssetBundle");
         AssetLoader.LoadAssetBundle(Path.Combine(AssetsPath,
             "discjockey"));
 
-        LogInfo("DiscJockeyPlugin<Awake>: Applying patches");
+        LogInfo("Applying patches");
         _harmony.PatchAll();
 
-        LogInfo("DiscJockeyPlugin<Awake>: Initializing Network Patch");
+        LogInfo("Initializing Network Patch");
         InitNetworkPatch();
 
-        LogInfo("DiscJockeyPlugin<Awake>: Initializing AudioLoaderAPI");
+        LogInfo("Initializing AudioLoader");
         AudioLoader.Init(DiscJockeyConfig.LocalConfig.MaxCachedDownloads, DownloadCacheDirectory,
             DownloadersDirectory);
 
         var uiManager = Instantiate(AssetLoader.UIManagerPrefab);
         DontDestroyOnLoad(uiManager);
         uiManager.hideFlags = HideFlags.HideAndDontSave;
-        LogInfo($"DiscJockeyPlugin<Awake>: Spawned DiscJockeyUIManager: {uiManager != null}");
 
         InputManager.Init();
         AudioManager.Init();
 
-        LogInfo("DiscJockeyPlugin<Awake>: DiscJockey initialized");
+        LogInfo("DiscJockey initialized");
     }
 
     private static void InitNetworkPatch()
@@ -108,28 +108,28 @@ public class DiscJockeyPlugin : BaseUnityPlugin
     }
 
 
-    internal static void LogDebug(string message)
+    internal static void LogDebug(string message, [CallerMemberName] string methodName = "", [CallerFilePath] string filePath = "")
     {
-        Instance.Log(message, LogLevel.Debug);
+        Instance.Log($"[{Path.GetFileNameWithoutExtension(filePath)}.{methodName}]: {message}", LogLevel.Debug);
     }
 
-    internal static void LogInfo(string message)
+    internal static void LogInfo(string message, [CallerMemberName] string methodName = "", [CallerFilePath] string filePath = "")
     {
-        Instance.Log(message, LogLevel.Info);
+        Instance.Log($"[{Path.GetFileNameWithoutExtension(filePath)}.{methodName}]: {message}", LogLevel.Info);
     }
 
-    internal static void LogWarning(string message)
+    internal static void LogWarning(string message, [CallerMemberName] string methodName = "", [CallerFilePath] string filePath = "")
     {
-        Instance.Log(message, LogLevel.Warning);
+        Instance.Log($"[{Path.GetFileNameWithoutExtension(filePath)}.{methodName}]: {message}", LogLevel.Warning);
     }
 
-    internal static void LogError(string message)
+    internal static void LogError(string message, [CallerMemberName] string methodName = "", [CallerFilePath] string filePath = "")
     {
-        Instance.Log(message, LogLevel.Error);
+        Instance.Log($"[{Path.GetFileNameWithoutExtension(filePath)}.{methodName}]: {message}", LogLevel.Error);
     }
 
     private void Log(string message, LogLevel logLevel)
     {
-        _logger.Log(logLevel, $"[{DateTime.Now:HH:mm:ss.ff}] {PluginName} {PluginVersion}: {message}");
+        _logger.Log(logLevel, $"[{PluginName} {PluginVersion}] - [{DateTime.Now:HH:mm:ss.ff}] - {message}");
     }
 }

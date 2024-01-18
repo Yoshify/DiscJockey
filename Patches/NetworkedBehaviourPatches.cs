@@ -20,7 +20,7 @@ public class NetworkedBehaviourPatches
             {
                 if (BoomboxManager.LookedAtOrHeldBoombox.IsStreaming)
                 {
-                    BoomboxManager.LookedAtOrHeldBoombox.StopStreamAndPlaybackAndNotify();    
+                    BoomboxManager.LookedAtOrHeldBoombox.StopStreamAndNotify();    
                 }
                 
                 BoomboxManager.OnDroppedOrPocketedBoombox();

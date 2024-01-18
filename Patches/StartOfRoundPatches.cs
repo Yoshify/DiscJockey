@@ -13,11 +13,9 @@ internal class StartOfRoundPatches
     {
         if (NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsServer)
         {
-            GameNetworkManagerPatches.HostDJNetworkManager =
-                Object.Instantiate(GameNetworkManagerPatches.DJNetworkManagerPrefab);
+            GameNetworkManagerPatches.HostDJNetworkManager = Object.Instantiate(GameNetworkManagerPatches.DJNetworkManagerPrefab);
             GameNetworkManagerPatches.HostDJNetworkManager.GetComponent<NetworkObject>().Spawn(true);
-            DiscJockeyPlugin.LogInfo(
-                $"StartOfRound_Start<Start>: Spawned DiscJockeyNetworkManager: {GameNetworkManagerPatches.HostDJNetworkManager != null}");
+            DiscJockeyPlugin.LogInfo($"DiscJockeyNetworkManager spawned? {GameNetworkManagerPatches.HostDJNetworkManager != null}");
         }
     }
 }

@@ -44,6 +44,6 @@ public struct AudioFormat : INetworkSerializable, IEquatable<AudioFormat>
     public override string ToString()
     {
         return
-            $"AudioFormat(SamplingRate<{SamplingRate}>, MsPerFrame<{MillisecondsPerFrame}>, AudioFPS<{AudioFramesPerSecond}>, FrameSize<{FrameSize}>, Channels<{Channels}>)";
+            $"AudioFormat<SamplingRate({SamplingRate}), MsPerFrame({MillisecondsPerFrame}), AudioFPS({AudioFramesPerSecond}), FrameSize({FrameSize}), Channels({Channels})>";
     }
 }

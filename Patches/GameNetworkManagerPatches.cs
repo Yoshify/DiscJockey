@@ -22,14 +22,12 @@ internal class GameNetworkManagerPatches
     public static void StartPatch()
     {
         DJNetworkManagerPrefab = AssetLoader.NetworkManagerPrefab;
-        DiscJockeyPlugin.LogInfo(
-            $"GameNetworkManagerPatches<StartPatch>: Loaded DiscJockeyNetworkManager Prefab? {DJNetworkManagerPrefab != null}");
+        DiscJockeyPlugin.LogInfo($"Loaded DiscJockeyNetworkManager Prefab? {DJNetworkManagerPrefab != null}");
 
         if (DJNetworkManagerPrefab != null)
         {
             NetworkManager.Singleton.AddNetworkPrefab(DJNetworkManagerPrefab);
-            DiscJockeyPlugin.LogInfo(
-                "GameNetworkManagerPatches<StartPatch>: Registered DiscJockeyNetworkManager Prefab");
+            DiscJockeyPlugin.LogInfo("Registered DiscJockeyNetworkManager Prefab");
         }
     }
 
@@ -37,33 +35,29 @@ internal class GameNetworkManagerPatches
     [HarmonyPrefix]
     public static void StartDisconnectPatch()
     {
-        try
+        foreach (var boombox in DJNetworkManager.Boomboxes.Values)
         {
-            if (NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsServer)
-            {
-                DiscJockeyPlugin.LogInfo("GameNetworkManagerPatches<StartDisconnectPatch>: Destroying NetworkManager");
-                Object.Destroy(HostDJNetworkManager);
-                HostDJNetworkManager = null;
-            }
-        }
-        catch
-        {
-            DiscJockeyPlugin.LogError(
-                "GameNetworkManagerPatches<StartDisconnectPatch>: Failed to destroy NetworkManager");
-        }
-
-        if (BoomboxManager.IsLookingAtOrHoldingBoombox)
-        {
-            if (BoomboxManager.LookedAtOrHeldBoombox.IsStreaming)
-            {
-                BoomboxManager.LookedAtOrHeldBoombox.StopStreamAndPlaybackAndNotify();
-            }
+            boombox.StopStreamAndNotify();
         }
         
         BoomboxManager.OnDroppedOrPocketedBoombox();
         BoomboxManager.OnLookedAwayFromBoombox();
         InputManager.EnablePlayerInteractions();
         DiscJockeyConfig.RevertSync();
+        
+        try
+        {
+            if (NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsServer)
+            {
+                DiscJockeyPlugin.LogInfo("Destroying DiscJockeyNetworkManager");
+                Object.Destroy(HostDJNetworkManager);
+                HostDJNetworkManager = null;
+            }
+        }
+        catch
+        {
+            DiscJockeyPlugin.LogError("Failed to destroy DiscJockeyNetworkManager");
+        }
 
         OnDisconnect?.Invoke();
     }

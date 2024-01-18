@@ -20,7 +20,7 @@ public class AudioLoader
         new YouTubeContentProvider()
     };
 
-    private static readonly YoutubeDL YouTubeDownloader = new();
+    private static readonly YoutubeDL ContentDownloader = new();
 
     private static string _downloadedAudioDirectory;
     private static string _downloadersDirectory;
@@ -76,19 +76,19 @@ public class AudioLoader
         _downloadersDirectory = audioDownloadersDirectory;
         _maximumCachedDownloads = maximumCachedDownloads;
 
-        YouTubeDownloader.YoutubeDLPath =
+        ContentDownloader.YoutubeDLPath =
             Directory.GetFiles(audioDownloadersDirectory).First(file => file.Contains("yt-dl"));
-        YouTubeDownloader.FFmpegPath =
+        ContentDownloader.FFmpegPath =
             Directory.GetFiles(audioDownloadersDirectory).First(file => file.Contains("ffmpeg"));
-        YouTubeDownloader.OutputFolder = downloadCacheDirectory;
-        YouTubeDownloader.OutputFileTemplate = "%(id)s.%(ext)s";
+        ContentDownloader.OutputFolder = downloadCacheDirectory;
+        ContentDownloader.OutputFileTemplate = "%(id)s.%(ext)s";
 
         if (DiscJockeyConfig.LocalConfig.KeepDownloadedSongsPermanently)
         {
             _downloadCacheInUse = false;
             _downloadedAudioDirectory = DiscJockeyPlugin.CustomSongsDirectory;
-            YouTubeDownloader.OutputFolder = _downloadedAudioDirectory;
-            YouTubeDownloader.OutputFileTemplate = "%(title)s.%(ext)s";
+            ContentDownloader.OutputFolder = _downloadedAudioDirectory;
+            ContentDownloader.OutputFileTemplate = "%(title)s.%(ext)s";
         }
     }
 
@@ -138,53 +138,58 @@ public class AudioLoader
     #endregion
 
     #region Downloader API
-
     
-
     private static string Sanitize(string fileName) => YoutubeDLSharp.Utils.Sanitize(fileName);
 
     private static async Task PerformContentDownload(ContentProvider provider, ParsedUri uri,
         string contentTitle = default, Action<float> onProgress = null)
     {
-        if (string.IsNullOrEmpty(contentTitle))
+        try
         {
-            DiscJockeyPlugin.LogInfo("Fetching content title");
-            var videoDataResult = await provider.Prefetch(YouTubeDownloader, uri);
-
-            if (!videoDataResult.Success)
+            if (string.IsNullOrEmpty(contentTitle))
             {
-                OnAudioDownloadFailed?.Invoke(uri.Url, string.Join("\n", videoDataResult.ErrorOutput));
-                return;
+                DiscJockeyPlugin.LogInfo("Fetching content title");
+                var videoDataResult = await provider.Prefetch(ContentDownloader, uri);
+
+                if (!videoDataResult.Success)
+                {
+                    OnAudioDownloadFailed?.Invoke(uri.Url, string.Join("\n", videoDataResult.ErrorOutput));
+                    return;
+                }
+
+                contentTitle = Sanitize(videoDataResult.Data.Title);
+                DiscJockeyPlugin.LogInfo($"Resolved to {contentTitle}");
+                OnAudioDownloadTitleResolved?.Invoke(uri.Url, contentTitle);
             }
 
-            contentTitle = Sanitize(videoDataResult.Data.Title);
-            DiscJockeyPlugin.LogInfo($"Resolved to {contentTitle}");
-            OnAudioDownloadTitleResolved?.Invoke(uri.Url, contentTitle);
-        }
+            onProgress ??= progress => OnAudioDownloadProgress?.Invoke(uri.Url, progress);
 
-        onProgress ??= progress => OnAudioDownloadProgress?.Invoke(uri.Url, progress);
-
-        if (_downloadCacheInUse && DownloadCache.IdExistsInCache(uri.Id))
-        {
-            var cachedDownload = DownloadCache.GetDownloadFromCache(uri.Id);
-            DiscJockeyPlugin.LogInfo($"{contentTitle} exists in our cache");
-            await LoadAudioFromDisk(cachedDownload.Filepath, cachedDownload.Title);
-            OnAudioDownloadCompleted?.Invoke(uri.Url);
-        }
-        else
-        {
-            DiscJockeyPlugin.LogInfo($"{contentTitle} isn't cached, downloading it");
-            var result = await provider.Download(YouTubeDownloader, uri, onProgress);
-            if (result.Success)
+            if (_downloadCacheInUse && DownloadCache.IdExistsInCache(uri.Id))
             {
-                await LoadAudioFromDisk(result.Data, contentTitle);
-                DownloadCache.AddToCache(new CachedDownload(uri.Id, contentTitle, result.Data));
+                var cachedDownload = DownloadCache.GetDownloadFromCache(uri.Id);
+                DiscJockeyPlugin.LogInfo($"{contentTitle} exists in our cache");
+                await LoadAudioFromDisk(cachedDownload.Filepath, cachedDownload.Title);
                 OnAudioDownloadCompleted?.Invoke(uri.Url);
             }
             else
             {
-                OnAudioDownloadFailed?.Invoke(uri.Url, string.Join("\n", result.ErrorOutput));
+                DiscJockeyPlugin.LogInfo($"{contentTitle} isn't cached, downloading it");
+                var result = await provider.Download(ContentDownloader, uri, onProgress);
+                if (result.Success)
+                {
+                    await LoadAudioFromDisk(result.Data, contentTitle);
+                    DownloadCache.AddToCache(new CachedDownload(uri.Id, contentTitle, result.Data));
+                    OnAudioDownloadCompleted?.Invoke(uri.Url);
+                }
+                else
+                {
+                    OnAudioDownloadFailed?.Invoke(uri.Url, string.Join("\n", result.ErrorOutput));
+                }
             }
+        }
+        catch (Exception e)
+        {
+            OnAudioDownloadFailed?.Invoke(uri.Url, e.ToString());
         }
     }
 
@@ -214,7 +219,7 @@ public class AudioLoader
         if (parsedUri.ContentType == ContentType.Playlist)
         {
             DiscJockeyPlugin.LogInfo("Content is a playlist");
-            var playlistInfo = await supportedProvider.FetchPlaylistInformation(YouTubeDownloader, parsedUri);
+            var playlistInfo = await supportedProvider.FetchPlaylistInformation(ContentDownloader, parsedUri);
             if (playlistInfo.Success)
             {
                 var downloaded = 0;
@@ -246,13 +251,13 @@ public class AudioLoader
 
     public static async Task<RunResult<VideoData>> PrefetchUnsupportedContentInformation(string url)
     {
-        return await YouTubeDownloader.RunVideoDataFetch(url);
+        return await ContentDownloader.RunVideoDataFetch(url);
     }
 
     private static async void DownloadUnsupportedContent(string url)
     {
         OnAudioDownloadWarning?.Invoke(url,
-            $"Downloading content from {new Uri(url).Host} is not directly supported. Download is proceeding, but issues may occur. Please report a bug if you encounter problems so that we can look into directly supporting this content provider.");
+            $"Downloading content from {new Uri(url).Host} is not directly supported. Download will proceed, but issues may occur. Please report a bug if you encounter problems so that we can look into directly supporting this content provider.");
 
         var videoDataResult = await PrefetchUnsupportedContentInformation(url);
 
@@ -276,19 +281,32 @@ public class AudioLoader
                 OnAudioDownloadProgress?.Invoke(url, downloadProgress.Progress);
             });
 
-            var result = await YouTubeDownloader.RunAudioDownload(url, AudioConversionFormat.Mp3, progress:progress);
-
-            if (result.Success)
+            try
             {
-                var title = Sanitize(videoDataResult.Data.Title);
-                await LoadAudioFromDisk(result.Data, title);
-                DownloadCache.AddToCache(new CachedDownload(videoDataResult.Data.ID, title, result.Data));
+                var result =
+                    await ContentDownloader.RunAudioDownload(url, AudioConversionFormat.Mp3, progress: progress, overrideOptions: new OptionSet
+                    {
+                        Quiet = true,
+                        Verbose = false,
+                        SocketTimeout = 30
+                    });
 
-                OnAudioDownloadCompleted?.Invoke(url);
+                if (result.Success)
+                {
+                    var title = Sanitize(videoDataResult.Data.Title);
+                    await LoadAudioFromDisk(result.Data, title);
+                    DownloadCache.AddToCache(new CachedDownload(videoDataResult.Data.ID, title, result.Data));
+
+                    OnAudioDownloadCompleted?.Invoke(url);
+                }
+                else
+                {
+                    OnAudioDownloadFailed?.Invoke(url, string.Join("\n", result.ErrorOutput));
+                }
             }
-            else
+            catch (Exception e)
             {
-                OnAudioDownloadFailed?.Invoke(url, string.Join("\n", result.ErrorOutput));
+                OnAudioDownloadFailed?.Invoke(url, e.ToString());
             }
         }
     }

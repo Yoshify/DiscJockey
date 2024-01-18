@@ -37,7 +37,9 @@ public class YouTubeContentProvider : ContentProvider
         {
             DumpJson = false,
             ForceOverwrites = true,
-            SocketTimeout = 120,
+            SocketTimeout = 30,
+            Verbose = false,
+            Quiet = true
         });
     }
 
@@ -56,7 +58,9 @@ public class YouTubeContentProvider : ContentProvider
                 FlatPlaylist = true,
                 DumpJson = true,
                 ForceOverwrites = true,
-                SocketTimeout = 60,
+                SocketTimeout = 30,
+                Verbose = false,
+                Quiet = true
             });
         return new RunResult<PlaylistInfo>(result.Success, result.ErrorOutput, outputCache);
     }
@@ -73,7 +77,9 @@ public class YouTubeContentProvider : ContentProvider
         {
             DumpJson = false,
             ForceOverwrites = true,
-            SocketTimeout = 60,
+            SocketTimeout = 30,
+            Verbose = false,
+            Quiet = true
         });
     }
 }

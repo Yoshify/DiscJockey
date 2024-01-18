@@ -12,47 +12,39 @@ public class NetworkedBoombox
 {
     private const int SampleRate = 48000;
     private const int FrameSizeMs = 20;
-    private readonly NetworkedAudioReceiver _networkedAudioReceiver;
-    private readonly NetworkedAudioSender _networkedAudioSender;
-    public AudioFormat? ActiveAudioFormat { get; private set; }
-    public TrackMetadata? ActiveTrackMetadata { get; private set; }
-
+    private readonly AudioStreamListener _audioStreamListener;
+    private readonly AudioStreamer _audioStreamer;
+    
+    public StreamInformation? ActiveStreamInformation { get; private set; }
     public BoomboxItem Boombox;
     public BoomboxPlaybackMode BoomboxPlaybackMode = BoomboxPlaybackMode.Sequential;
-    public float Volume => _networkedAudioReceiver.Volume;
+    public float Volume => _audioStreamListener.Volume;
 
     public NetworkedBoombox(BoomboxItem boombox)
     {
         var format = new AudioFormat(SampleRate);
         Boombox = boombox;
-        _networkedAudioReceiver = new NetworkedAudioReceiver(boombox.boomboxAudio, format);
-        _networkedAudioSender = new NetworkedAudioSender(format);
-
-        DJNetworkManager.OnAudioStreamTransmitStarted += OnAudioStreamTransmitStarted;
-        DJNetworkManager.OnAudioStreamPlaybackStopped += OnPlaybackStopped;
-        DJNetworkManager.OnAudioStreamPacketReceived += OnAudioPacketPacketReceived;
-        DJNetworkManager.OnBoomboxVolumeChanged += OnBoomboxVolumeChanged;
-        DJNetworkManager.OnBoomboxPlaybackModeChanged += OnPlaybackModeChanged;
-        _networkedAudioSender.OnFrameReadyToSend += SendFrame;
-        _networkedAudioReceiver.OnPlaybackCompleted += OnPlaybackCompleted;
+        _audioStreamListener = new AudioStreamListener(boombox.boomboxAudio, format);
+        _audioStreamer = new AudioStreamer(format);
+        
+        _audioStreamer.OnFrameReadyToSend += SendFrame;
+        _audioStreamListener.OnPlaybackCompleted += OnPlaybackCompleted;
     }
 
     public ulong NetworkedBoomboxId => Boombox.NetworkObjectId;
-    public float CurrentTrackLength => ActiveTrackMetadata?.LengthInSeconds ?? 0;
-    public float CurrentTrackProgress => _networkedAudioReceiver.Time;
-    public int CurrentTrackIndexInOwnersTracklist => ActiveTrackMetadata?.IndexInOwnersTracklist ?? 0;
+    public float CurrentTrackLength => ActiveStreamInformation.HasValue ? ActiveStreamInformation.Value.TrackMetadata.LengthInSeconds : 0;
+    public float CurrentTrackProgress => _audioStreamListener.Time;
+    public int CurrentTrackIndexInOwnersTracklist => ActiveStreamInformation.HasValue ? ActiveStreamInformation.Value.TrackMetadata.IndexInOwnersTracklist : 0;
+    public bool LocalClientOwnsCurrentTrack => ActiveStreamInformation.HasValue && ActiveStreamInformation.Value.TrackMetadata.OwnerId == LocalPlayerHelper.Player.playerClientId;
 
-    public bool LocalClientOwnsCurrentTrack => ActiveTrackMetadata.HasValue &&
-                                               ActiveTrackMetadata.Value.OwnerId ==
-                                               LocalPlayerHelper.Player.playerClientId;
-
-    public bool IsPlaying => _networkedAudioReceiver.IsPlaying;
-    public bool IsStreaming => _networkedAudioSender.IsStreaming;
+    public bool IsPlaying => _audioStreamListener.IsPlaying;
+    public bool IsStreaming => _audioStreamer.IsStreaming;
 
     private void OnPlaybackCompleted()
     {
         if (LocalClientOwnsCurrentTrack)
         {
+            DiscJockeyPlugin.LogInfo($"Playback of {ActiveStreamInformation?.TrackMetadata.Name} complete - moving on to the next track");
             StartStreamingTrack(
                 AudioManager.TrackList.GetNextTrack(
                     CurrentTrackIndexInOwnersTracklist,
@@ -60,135 +52,82 @@ public class NetworkedBoombox
         }
     }
 
-    private void OnAudioStreamTransmitStarted(ulong senderClientId, ulong networkedBoomboxId,
-        TrackMetadata trackMetadata, AudioFormat audioFormat)
+    public void ListenToStream(ulong senderId, StreamInformation streamInformation)
     {
-        if (networkedBoomboxId != NetworkedBoomboxId) return;
-
-        DiscJockeyPlugin.LogInfo("OnAudioStreamStarted: Called");
-        if (senderClientId != LocalPlayerHelper.Player.playerClientId && _networkedAudioSender.IsStreaming)
+        if (senderId != LocalPlayerHelper.Player.playerClientId)
         {
-            DiscJockeyPlugin.LogInfo(
-                "NetworkedBoombox<OnAudioStreamStarted>: We were streaming, but someone else is now. Stopping our stream.");
-            StopStreamLocally();
+            if (_audioStreamer.IsStreaming)
+            {
+                DiscJockeyPlugin.LogInfo("We were streaming, but someone else is now. Stopping our stream.");
+                StopSendingStream();
+            }
+
+            ActiveStreamInformation = streamInformation;
         }
 
-        if (_networkedAudioReceiver.IsPlaying)
-        {
-            DiscJockeyPlugin.LogInfo("NetworkedBoombox<OnAudioStreamStarted>: We were playing, now we're not");
-            StopPlaybackLocally();
-        }
-        
-        if (!_networkedAudioReceiver.CurrentAudioFormat.Equals(audioFormat))
-        {
-            DiscJockeyPlugin.LogInfo(
-                "NetworkedBoombox<OnAudioStreamStarted>: Received AudioFormat differs to our receiver, updating and resetting encoder");
-            _networkedAudioReceiver.UpdateAudioFormat(audioFormat);
-        }
-
-        if (senderClientId != LocalPlayerHelper.Player.playerClientId)
-        {
-            ActiveTrackMetadata = trackMetadata;
-            ActiveAudioFormat = audioFormat;
-        }
-
-        DiscJockeyPlugin.LogInfo("NetworkedBoombox<OnAudioStreamStarted>: Starting playback loop.");
-
-        if (DiscJockeyConfig.SyncedConfig.EntitiesHearMusic)
-        {
-            Boombox.isPlayingMusic = true;
-        }
-        _networkedAudioReceiver.StartPlayback(trackMetadata.LengthInSamples);
+        UpdatePlaybackStateForEntities(true);
+        _audioStreamListener.StartListening(streamInformation);
     }
+    
+    public void SetPlaybackMode(BoomboxPlaybackMode mode) => BoomboxPlaybackMode = mode;
 
-    private void OnPlaybackModeChanged(ulong networkedBoomboxId, BoomboxPlaybackMode mode)
-    {
-        if (networkedBoomboxId == NetworkedBoomboxId) BoomboxPlaybackMode = mode;
-    }
-
-    private void OnBoomboxVolumeChanged(ulong networkedBoomboxId, float volume)
-    {
-        if (networkedBoomboxId == NetworkedBoomboxId) SetVolume(volume);
-    }
-
-    private void OnPlaybackStopped(ulong senderClientId, ulong networkedBoomboxId)
-    {
-        if (senderClientId != LocalPlayerHelper.Player.playerClientId) StopPlaybackLocally();
-    }
-
-    private void NotifyStreamStarted(ulong playerClientId, ulong networkedBoomboxId, TrackMetadata trackMetadata,
-        AudioFormat audioFormat)
-    {
-        DJNetworkManager.Instance.SendAudioStreamTransmissionStartedServerRpc(playerClientId,
-            networkedBoomboxId, trackMetadata, audioFormat);
-    }
-
-    public void OnAudioPacketPacketReceived(ulong networkedBoomboxId, NetworkedAudioPacket packet)
-    {
-        if (networkedBoomboxId != NetworkedBoomboxId) return;
-        _networkedAudioReceiver.AddFrameToBuffer(packet.Frame);
-    }
+    public void ReceiveStreamPacket(NetworkedAudioPacket packet) => _audioStreamListener.AddFrameToBuffer(packet.Frame);
 
     private void SendFrame(byte[] frame)
     {
-        if (!ActiveTrackMetadata.HasValue || !ActiveAudioFormat.HasValue || frame == null) return;
+        if (!ActiveStreamInformation.HasValue)
+        {
+            DiscJockeyPlugin.LogWarning("Can't send a frame when there's no ActiveStreamInformation!");
+            return;
+        }
         
         DJNetworkManager.Instance.SendAudioPacketServerRpc(NetworkedBoomboxId, new NetworkedAudioPacket(
             frame,
-            ActiveTrackMetadata.Value,
-            ActiveAudioFormat.Value
+            ActiveStreamInformation.Value
         ));
     }
 
     public void StartStreamingTrack(Track track)
     {
-        DiscJockeyPlugin.LogInfo($"NetworkedBoombox<StartStreamingTrack>: Requested stream for {track.Audio.Name}");
-        
-        ActiveTrackMetadata = track.ExtractMetadata();
-        ActiveAudioFormat = new AudioFormat(SampleRate, FrameSizeMs, track.Audio.Format.Channels);
-        
-        if (!_networkedAudioSender.CurrentAudioFormat.Equals(ActiveAudioFormat.Value))
-        {
-            DiscJockeyPlugin.LogInfo(
-                "NetworkedBoombox<StartStreamingTrack>: Streamed AudioFormat differs to our sender, updating and resetting encoder");
-            _networkedAudioSender.UpdateAudioFormat(ActiveAudioFormat.Value);
-        }
-
-        DiscJockeyPlugin.LogInfo(
-            $"NetworkedBoombox<StartStreamingTrack>: Player {LocalPlayerHelper.Player.playerClientId} is starting a stream");
-        _networkedAudioSender.StartStreaming(track.Audio);
-        NotifyStreamStarted(LocalPlayerHelper.Player.playerClientId, NetworkedBoomboxId, ActiveTrackMetadata.Value,
-            ActiveAudioFormat.Value);
+        DiscJockeyPlugin.LogInfo($"Player {LocalPlayerHelper.Player.playerClientId} is beginning to stream {track.Audio.Name}");
+        ActiveStreamInformation = new StreamInformation(
+            track.ExtractMetadata(),
+            new AudioFormat(SampleRate, FrameSizeMs, track.Audio.Format.Channels)
+        );
+        _audioStreamer.StartStreaming(track.Audio, ActiveStreamInformation.Value.AudioFormat);
+        DJNetworkManager.Instance.NotifyStreamStartedServerRpc(LocalPlayerHelper.Player.playerClientId, NetworkedBoomboxId, ActiveStreamInformation.Value);
     }
 
-    public void StopPlaybackLocally()
+    private void UpdatePlaybackStateForEntities(bool value)
     {
-        if (DiscJockeyConfig.SyncedConfig.EntitiesHearMusic)
-        {
-            Boombox.isPlayingMusic = false;
-        }
-        _networkedAudioReceiver.StopPlayback();
+        if (!DiscJockeyConfig.SyncedConfig.EntitiesHearMusic) return;
+        Boombox.isPlayingMusic = value;
+    }
+
+    public void StopListeningToStream()
+    {
+        UpdatePlaybackStateForEntities(false);
+        _audioStreamListener.StopPlayback();
         Boombox.boomboxAudio.PlayOneShot(Boombox.GetStopAudio());
     }
 
-    public void StopStreamLocally()
+    private void StopSendingStream()
     {
-        if (_networkedAudioSender.IsStreaming)
+        if (_audioStreamer.IsStreaming)
         {
-            _networkedAudioSender.StopStreaming();
+            _audioStreamer.StopStreaming();
         }
     }
 
-    public void StopStreamAndPlaybackAndNotify()
+    public void StopStreamAndNotify()
     {
-        StopStreamLocally();
-        StopPlaybackLocally();
-        DJNetworkManager.Instance.SendAudioStreamPlaybackStoppedServerRpc(
-            LocalPlayerHelper.Player.playerClientId, NetworkedBoomboxId);
+        StopSendingStream();
+        StopListeningToStream();
+        DJNetworkManager.Instance.NotifyStreamStoppedServerRpc(LocalPlayerHelper.Player.playerClientId, NetworkedBoomboxId);
     }
 
     public void SetVolume(float volume)
     {
-        _networkedAudioReceiver.SetVolume(volume);
+        _audioStreamListener.SetVolume(volume);
     }
 }

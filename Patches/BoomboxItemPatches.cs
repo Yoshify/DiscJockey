@@ -16,7 +16,7 @@ internal class BoomboxItemPatches
     [HarmonyPostfix]
     private static void StartPatch(BoomboxItem __instance)
     {
-        DiscJockeyPlugin.LogInfo("BoomboxItemPatches<StartPatch>: Registering Boombox");
+        DiscJockeyPlugin.LogInfo("Registering Boombox");
         DJNetworkManager.Instance.RegisterBoomboxServerRpc(__instance.NetworkObjectId);
         __instance.itemProperties.canBeGrabbedBeforeGameStart = true;
 
@@ -43,22 +43,21 @@ internal class BoomboxItemPatches
         {
             if (networkedBoombox.IsPlaying || networkedBoombox.IsStreaming)
             {
-                DiscJockeyPlugin.LogInfo("BoomboxItemPatches<StartMusicPatch>: Stop music requested");
-                networkedBoombox.StopStreamAndPlaybackAndNotify();
+                DiscJockeyPlugin.LogInfo("Stop music requested");
+                networkedBoombox.StopStreamAndNotify();
             }
             else
             {
                 if (AudioManager.TrackList.HasAnyTracks)
                 {
-                    if (networkedBoombox.ActiveTrackMetadata.HasValue && networkedBoombox.LocalClientOwnsCurrentTrack)
+                    if (networkedBoombox.ActiveStreamInformation.HasValue && networkedBoombox.LocalClientOwnsCurrentTrack)
                     {
-                        DiscJockeyPlugin.LogInfo(
-                            "BoomboxItemPatches<StartMusicPatch>: Start music requested, we own the current or previous track, requesting next track");
+                        DiscJockeyPlugin.LogInfo("Start music requested, we own the current or previous track, requesting next track");
                         networkedBoombox.StartStreamingTrack(AudioManager.TrackList.GetNextTrack(networkedBoombox.CurrentTrackIndexInOwnersTracklist, networkedBoombox.BoomboxPlaybackMode));
                     }
                     else
                     {
-                        DiscJockeyPlugin.LogInfo("BoomboxItemPatches<StartMusicPatch>: Start music requested, we don't own the current or previous track, requesting first track in our list");
+                        DiscJockeyPlugin.LogInfo("Start music requested, we don't own the current or previous track, requesting first track in our list");
                         var firstTrack = AudioManager.TrackList.GetTrackAtIndex(0);
                         networkedBoombox.StartStreamingTrack(firstTrack);
                     }
@@ -67,8 +66,8 @@ internal class BoomboxItemPatches
         }
         else
         {
-            DiscJockeyPlugin.LogInfo("BoomboxItem<StartMusicPatch>: Stop music requested");
-            networkedBoombox.StopStreamAndPlaybackAndNotify();
+            DiscJockeyPlugin.LogInfo("Stop music requested");
+            networkedBoombox.StopStreamAndNotify();
         }
 
         return false;

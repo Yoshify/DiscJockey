@@ -11,10 +11,10 @@ public static class AssetLoader
 
     public static void LoadAssetBundle(string assetBundlePath)
     {
-        DiscJockeyPlugin.LogInfo($"AssetUtils<LoadAssetBundle>: Loading AssetBundle at {assetBundlePath}");
+        DiscJockeyPlugin.LogInfo($"Loading AssetBundle at {assetBundlePath}");
         DiscJockeyAssetBundle = AssetBundle.LoadFromFile(assetBundlePath);
 
-        DiscJockeyPlugin.LogInfo("AssetUtils<LoadAssetBundle>: Setting prefabs");
+        DiscJockeyPlugin.LogInfo("Setting prefabs");
         UIManagerPrefab = DiscJockeyAssetBundle.LoadAsset<GameObject>("DiscJockeyUIManager");
         TrackListButtonPrefab = DiscJockeyAssetBundle.LoadAsset<GameObject>("TrackListButton");
         NetworkManagerPrefab = DiscJockeyAssetBundle.LoadAsset<GameObject>("DiscJockeyNetworkManager");

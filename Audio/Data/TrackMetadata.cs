@@ -27,8 +27,7 @@ public struct TrackMetadata : INetworkSerializable, IEquatable<TrackMetadata>
 
     public override string ToString()
     {
-        return
-            $"Id {Id} Index {IndexInOwnersTracklist} Owner {OwnerId}, {OwnerName} Name {Name} Length {LengthInSeconds} Samples {LengthInSamples}";
+        return $"TrackMetadata<Id({Id}), Name({Name}), Index({IndexInOwnersTracklist}), Owner(#{OwnerId}: {OwnerName}, Length({LengthInSeconds}), LengthInSamples({LengthInSamples})>";
     }
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter

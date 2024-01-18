@@ -8,7 +8,7 @@ using UnityEngine.LowLevel;
 
 namespace DiscJockey.Networking.Audio;
 
-public class NetworkedAudioSender
+public class AudioStreamer
 {
     private AudioEncoder _audioEncoder;
     private CancellationTokenSource _sendAudioCancellationToken;
@@ -26,7 +26,7 @@ public class NetworkedAudioSender
         Stopped
     }
 
-    public NetworkedAudioSender(AudioFormat audioFormat)
+    public AudioStreamer(AudioFormat audioFormat)
     {
         UpdateAudioFormat(audioFormat);
     }
@@ -40,7 +40,7 @@ public class NetworkedAudioSender
     
     public void StopStreaming()
     {
-        DiscJockeyPlugin.LogInfo($"NetworkedAudioSender<StopStreaming>: Stream stopped");
+        DiscJockeyPlugin.LogInfo($"Stream stopped");
         _sendAudioCancellationToken.Cancel();
         _sendAudioCancellationToken.Dispose();
         _sendAudioCancellationToken = new CancellationTokenSource();
@@ -48,11 +48,18 @@ public class NetworkedAudioSender
         _streamedAudio = null;
     }
     
-    public void StartStreaming(CachedAudio audio)
+    public void StartStreaming(CachedAudio audio, AudioFormat audioFormat)
     {
         if (_streamingState == StreamingState.Streaming)
+        {
             StopStreaming();
-        DiscJockeyPlugin.LogInfo($"NetworkedAudioSender<StartStreaming>: Starting Stream for {audio.Name}");
+        }
+
+        if (!CurrentAudioFormat.Equals(audioFormat))
+        {
+            UpdateAudioFormat(audioFormat);
+        }
+
         _streamedAudio = audio;
         _streamedAudioSampleProvider = new CachedAudioSampleProvider(_streamedAudio);
         _streamingState = StreamingState.Streaming;
@@ -73,7 +80,7 @@ public class NetworkedAudioSender
         {
             if (offsetSamples > _streamedAudio.AudioData.Length)
             {
-                DiscJockeyPlugin.LogInfo("NetworkedAudioSender<SendAudio>: End of stream reached");
+                DiscJockeyPlugin.LogInfo("End of stream reached");
                 StopStreaming();
                 break;
             }

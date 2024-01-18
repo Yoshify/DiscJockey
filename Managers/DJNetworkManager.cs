@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using DiscJockey.Audio.Data;
 using DiscJockey.Data;
+using DiscJockey.Events;
 using DiscJockey.Networking;
 using DiscJockey.Networking.Audio;
 using Unity.Netcode;
@@ -9,36 +11,17 @@ namespace DiscJockey.Managers;
 
 public class DJNetworkManager : NetworkBehaviour
 {
-    public delegate void AudioStreamEventHandler(ulong senderClientId, ulong networkedBoomboxId);
-
-    public delegate void AudioStreamStartEventHandler(ulong senderClientId, ulong networkedBoomboxId,
-        TrackMetadata trackMetadata, AudioFormat audioFormat);
-
-    public delegate void AudioStreamTransmitEventHandler(ulong networkedBoomboxId, NetworkedAudioPacket audioPacket);
-
-    public delegate void BoomboxPlaybackModeChangedEventHandler(ulong networkedBoomboxId, BoomboxPlaybackMode mode);
-
-    public delegate void BoomboxVolumeChangedEventHandler(ulong networkedBoomboxId, float volume);
-
     public static DJNetworkManager Instance;
     public static readonly Dictionary<ulong, NetworkedBoombox> Boomboxes = new();
-
-
+    
     public override void OnDestroy()
     {
         Boomboxes.Clear();
-
         base.OnDestroy();
     }
-
-    public static event AudioStreamStartEventHandler OnAudioStreamTransmitStarted;
-    public static event AudioStreamEventHandler OnAudioStreamTransmitStopped;
-    public static event AudioStreamStartEventHandler OnAudioStreamPlaybackStarted;
-    public static event AudioStreamEventHandler OnAudioStreamPlaybackStopped;
-    public static event AudioStreamTransmitEventHandler OnAudioStreamPacketReceived;
-
-    public static event BoomboxVolumeChangedEventHandler OnBoomboxVolumeChanged;
-    public static event BoomboxPlaybackModeChangedEventHandler OnBoomboxPlaybackModeChanged;
+    
+    public static event Action<StreamStartedEventArgs> OnStreamStarted;
+    public static event Action<StreamStoppedEventArgs> OnStreamStopped;
 
     [ClientRpc]
     public void RegisterBoomboxClientRpc(ulong boomboxId)
@@ -46,13 +29,13 @@ public class DJNetworkManager : NetworkBehaviour
         if (Boomboxes.ContainsKey(boomboxId))
         {
             DiscJockeyPlugin.LogWarning(
-                $"DiscJockeyNetworkManager<RegisterBoomboxClientRpc>: Boombox {boomboxId} is already registered!");
+                $"Boombox {boomboxId} is already registered!");
             return;
         }
 
         var boomboxItem = NetworkManager.Singleton.SpawnManager.SpawnedObjects[boomboxId].GetComponent<BoomboxItem>();
         Boomboxes.Add(boomboxId, new NetworkedBoombox(boomboxItem));
-        DiscJockeyPlugin.LogInfo($"DiscJockeyNetworkManager<RegisterBoomboxClientRpc>: Boombox {boomboxId} registered");
+        DiscJockeyPlugin.LogInfo($"Boombox {boomboxId} registered");
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -67,16 +50,16 @@ public class DJNetworkManager : NetworkBehaviour
         if (!Boomboxes.ContainsKey(boomboxId))
         {
             DiscJockeyPlugin.LogWarning(
-                "DiscJockeyNetworkManager<UnregisterBoomboxClientRpc>: Attempted to unregister a Boombox that was never registered!");
+                "Attempted to unregister a Boombox that was never registered!");
             return;
         }
 
         if (Boomboxes.Remove(boomboxId))
             DiscJockeyPlugin.LogInfo(
-                $"DiscJockeyNetworkManager<UnregisterBoomboxClientRpc>: Boombox {boomboxId} unregistered");
+                $"Boombox {boomboxId} unregistered");
         else
             DiscJockeyPlugin.LogError(
-                $"DiscJockeyNetworkManager<UnregisterBoomboxClientRpc>: Failed to unregister Boombox {boomboxId}!");
+                $"Failed to unregister Boombox {boomboxId}!");
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -88,7 +71,14 @@ public class DJNetworkManager : NetworkBehaviour
     [ClientRpc]
     public void ReceiveAudioPacketClientRpc(ulong networkedBoomboxId, NetworkedAudioPacket data)
     {
-        OnAudioStreamPacketReceived?.Invoke(networkedBoomboxId, data);
+        if (Boomboxes.TryGetValue(networkedBoomboxId, out var boombox))
+        {
+            boombox.ReceiveStreamPacket(data);
+        }
+        else
+        {
+            DiscJockeyPlugin.LogError($"Can't receive stream packet as {networkedBoomboxId} is not a registered boombox!");
+        }
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -98,35 +88,16 @@ public class DJNetworkManager : NetworkBehaviour
     }
 
     [ClientRpc]
-    public void ReceiveAudioTransmissionStreamStartedClientRpc(ulong senderClientId, ulong networkedBoomboxId,
-        TrackMetadata trackMetadata, AudioFormat audioFormat)
-    {
-        OnAudioStreamTransmitStarted?.Invoke(senderClientId, networkedBoomboxId, trackMetadata, audioFormat);
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    public void SendAudioStreamTransmissionStartedServerRpc(ulong senderClientId, ulong networkedBoomboxId,
-        TrackMetadata trackMetadata, AudioFormat audioFormat)
-    {
-        ReceiveAudioTransmissionStreamStartedClientRpc(senderClientId, networkedBoomboxId, trackMetadata, audioFormat);
-    }
-
-    [ClientRpc]
-    public void ReceiveAudioStreamTransmissionStoppedClientRpc(ulong senderClientId, ulong networkedBoomboxId)
-    {
-        OnAudioStreamTransmitStopped?.Invoke(senderClientId, networkedBoomboxId);
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    public void SendAudioStreamTransmissionStoppedServerRpc(ulong senderClientId, ulong networkedBoomboxId)
-    {
-        ReceiveAudioStreamTransmissionStoppedClientRpc(senderClientId, networkedBoomboxId);
-    }
-
-    [ClientRpc]
     public void ReceiveBoomboxVolumeChangeRequestClientRpc(ulong networkedBoomboxId, float volume)
     {
-        OnBoomboxVolumeChanged?.Invoke(networkedBoomboxId, volume);
+        if (Boomboxes.TryGetValue(networkedBoomboxId, out var boombox))
+        {
+            boombox.SetVolume(volume);
+        }
+        else
+        {
+            DiscJockeyPlugin.LogError($"Can't change volume as {networkedBoomboxId} is not a registered boombox!");
+        }
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -138,7 +109,14 @@ public class DJNetworkManager : NetworkBehaviour
     [ClientRpc]
     public void ReceiveBoomboxPlaybackModeChangeRequestClientRpc(ulong networkedBoomboxId, BoomboxPlaybackMode mode)
     {
-        OnBoomboxPlaybackModeChanged?.Invoke(networkedBoomboxId, mode);
+        if (Boomboxes.TryGetValue(networkedBoomboxId, out var boombox))
+        {
+            boombox.SetPlaybackMode(mode);
+        }
+        else
+        {
+            DiscJockeyPlugin.LogError($"Can't change playback mode as {networkedBoomboxId} is not a registered boombox!");
+        }
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -146,34 +124,47 @@ public class DJNetworkManager : NetworkBehaviour
     {
         ReceiveBoomboxPlaybackModeChangeRequestClientRpc(networkedBoomboxId, mode);
     }
-
-
+    
     [ClientRpc]
-    public void ReceiveAudioStreamPlaybackStartedClientRpc(ulong senderClientId, ulong networkedBoomboxId,
-        TrackMetadata trackMetadata, AudioFormat audioFormat)
+    public void NotifyStreamStartedClientRpc(ulong senderId, ulong networkedBoomboxId, StreamInformation streamInformation)
     {
-        OnAudioStreamPlaybackStarted?.Invoke(senderClientId, networkedBoomboxId, trackMetadata, audioFormat);
+        if (Boomboxes.TryGetValue(networkedBoomboxId, out var boombox))
+        {
+            boombox.ListenToStream(senderId, streamInformation);
+            OnStreamStarted?.Invoke(new StreamStartedEventArgs(senderId, networkedBoomboxId, streamInformation));
+        }
+        else
+        {
+            DiscJockeyPlugin.LogError($"Can't listen to stream as {networkedBoomboxId} is not a registered boombox!");
+        }
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void SendAudioStreamPlaybackStartedServerRpc(ulong senderClientId, ulong networkedBoomboxId,
-        TrackMetadata trackMetadata, AudioFormat audioFormat)
+    public void NotifyStreamStartedServerRpc(ulong senderId, ulong networkedBoomboxId, StreamInformation streamInformation)
     {
-        ReceiveAudioStreamPlaybackStartedClientRpc(senderClientId, networkedBoomboxId, trackMetadata, audioFormat);
+        NotifyStreamStartedClientRpc(senderId, networkedBoomboxId, streamInformation);
     }
 
     [ClientRpc]
-    public void ReceiveAudioStreamPlaybackStoppedClientRpc(ulong senderClientId, ulong networkedBoomboxId)
+    public void NotifyStreamStoppedClientRpc(ulong senderId, ulong networkedBoomboxId)
     {
-        OnAudioStreamPlaybackStopped?.Invoke(senderClientId, networkedBoomboxId);
+        if (Boomboxes.TryGetValue(networkedBoomboxId, out var boombox))
+        {
+            boombox.StopListeningToStream();
+            OnStreamStopped?.Invoke(new StreamStoppedEventArgs(senderId, networkedBoomboxId));
+        }
+        else
+        {
+            DiscJockeyPlugin.LogError($"Can't stop {networkedBoomboxId} is not a registered boombox!");
+        }
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void SendAudioStreamPlaybackStoppedServerRpc(ulong senderClientId, ulong networkedBoomboxId)
+    public void NotifyStreamStoppedServerRpc(ulong senderId, ulong networkedBoomboxId)
     {
-        ReceiveAudioStreamPlaybackStoppedClientRpc(senderClientId, networkedBoomboxId);
+        NotifyStreamStoppedClientRpc(senderId, networkedBoomboxId);
     }
-
+    
     public override void OnNetworkSpawn()
     {
         if (Instance == null) Instance = this;

@@ -6,6 +6,7 @@ using System.Threading;
 using DiscJockey.Audio;
 using DiscJockey.Audio.Data;
 using DiscJockey.Data;
+using DiscJockey.Events;
 using DiscJockey.Input;
 using DiscJockey.Patches;
 using DiscJockey.Utils;
@@ -57,13 +58,11 @@ public class UIManager : MonoBehaviour
     {
         if (_hasInitialized) return;
         if (Instance == null) Instance = this;
-        DiscJockeyPlugin.LogInfo("DiscJockeyUIManager<Awake>: Called");
         InitUIEvents();
         DiscJockeyUIPanel.SetActive(false);
         RegisterEventListeners();
         ApplyConfig();
         _trackNameScrollRoutineCancellationSource = new CancellationTokenSource();
-        DiscJockeyPlugin.LogInfo("DiscJockeyUIManager<Awake>: Initialized");
         _hasInitialized = true;
     }
 
@@ -105,8 +104,8 @@ public class UIManager : MonoBehaviour
     {
         AudioManager.OnVolumeChanged += OnVolumeChanged;
         AudioManager.OnTrackAddedToTrackList += OnTrackAddedToTracklist;
-        DJNetworkManager.OnAudioStreamTransmitStarted += OnAudioPlaybackStarted;
-        DJNetworkManager.OnAudioStreamPlaybackStopped += OnAudioPlaybackStopped;
+        DJNetworkManager.OnStreamStarted += OnStreamStarted;
+        DJNetworkManager.OnStreamStopped += OnStreamStopped;
         GameNetworkManagerPatches.OnDisconnect += OnDisconnect;
         AudioManager.TrackList.OnTracklistSorted += SortTrackList;
     }
@@ -115,8 +114,8 @@ public class UIManager : MonoBehaviour
     {
         AudioManager.OnVolumeChanged -= OnVolumeChanged;
         AudioManager.OnTrackAddedToTrackList -= OnTrackAddedToTracklist;
-        DJNetworkManager.OnAudioStreamTransmitStarted -= OnAudioPlaybackStarted;
-        DJNetworkManager.OnAudioStreamPlaybackStopped -= OnAudioPlaybackStopped;
+        DJNetworkManager.OnStreamStarted -= OnStreamStarted;
+        DJNetworkManager.OnStreamStopped -= OnStreamStopped;
         GameNetworkManagerPatches.OnDisconnect -= OnDisconnect;
         AudioManager.TrackList.OnTracklistSorted -= SortTrackList;
     }
@@ -149,18 +148,17 @@ public class UIManager : MonoBehaviour
         _pendingTrackButton = null;
     }
 
-    private void OnAudioPlaybackStarted(ulong senderClientId, ulong networkedBoomboxId, TrackMetadata trackMetadata,
-        AudioFormat audioFormat)
+    private void OnStreamStarted(StreamStartedEventArgs streamStartedEventArgs)
     {
-        if (BoomboxManager.LookedAtOrHeldBoomboxIsNot(networkedBoomboxId))
+        if (BoomboxManager.LookedAtOrHeldBoomboxIsNot(streamStartedEventArgs.NetworkedBoomboxId))
         {
             return;
         }
         
-        TrackOwnerName.text = senderClientId == LocalPlayerHelper.Player.playerClientId
+        TrackOwnerName.text = streamStartedEventArgs.SenderId == LocalPlayerHelper.Player.playerClientId
             ? "From Your Tracklist"
-            : $"From {trackMetadata.OwnerName}'s Tracklist";
-        TrackName.text = trackMetadata.Name;
+            : $"From {streamStartedEventArgs.StreamInformation.TrackMetadata.OwnerName}'s Tracklist";
+        TrackName.text = streamStartedEventArgs.StreamInformation.TrackMetadata.Name;
 
         StopButton.gameObject.SetActive(true);
         PlayButton.gameObject.SetActive(false);
@@ -168,14 +166,14 @@ public class UIManager : MonoBehaviour
         StartTrackScrollEffect();
     }
 
-    private void OnAudioPlaybackStopped(ulong senderClientId, ulong networkedBoomboxId)
+    private void OnStreamStopped(StreamStoppedEventArgs streamStoppedEventArgs)
     {
-        if (BoomboxManager.LookedAtOrHeldBoomboxIsNot(networkedBoomboxId))
+        if (BoomboxManager.LookedAtOrHeldBoomboxIsNot(streamStoppedEventArgs.NetworkedBoomboxId))
         {
             return;
         }
         
-        DiscJockeyPlugin.LogInfo("DiscJockeyUIManager<OnStopTrack>: Stopping track");
+        DiscJockeyPlugin.LogInfo("Stopping track");
         TrackProgressSlider.value = 0;
         TrackProgressSlider.minValue = 0;
         TrackProgressSlider.maxValue = 0;
@@ -189,8 +187,7 @@ public class UIManager : MonoBehaviour
 
     private void AddButtonToTrackList(Track track)
     {
-        DiscJockeyPlugin.LogInfo(
-            $"DiscJockeyUIManager<AddButtonToTrackList>: Adding button for track {track}");
+        DiscJockeyPlugin.LogInfo($"Adding button for track {track}");
 
         var trackListButton = TrackListButton.InstantiateAsNormal(TracklistContainer.transform, track);
         _trackListButtonInstances.Add(trackListButton);

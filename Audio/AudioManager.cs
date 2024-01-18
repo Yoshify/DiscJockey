@@ -38,21 +38,21 @@ public static class AudioManager
 
         SetupListeners();
         DiscJockeyPlugin.LogInfo(
-            $"DiscJockeyAudioManager<Init>: Loading audio from {DiscJockeyPlugin.CustomSongsDirectory}");
+            $"Loading audio from {DiscJockeyPlugin.CustomSongsDirectory}");
         AudioLoader.LoadAudioClipsFromDirectory(DiscJockeyPlugin.CustomSongsDirectory);
         SearchAndLoadOtherPluginSongs();
 
         if (DiscJockeyConfig.LocalConfig.ClearDownloadCacheAtReboot)
         {
             DiscJockeyPlugin.LogInfo(
-                "DiscJockeyAudioManager<Init>: Config value [ClearDownloadCacheAtReboot] is TRUE. Clearing cache.");
+                "Config value [ClearDownloadCacheAtReboot] is TRUE. Clearing cache.");
             AudioLoader.DownloadCache.Clear();
         }
 
         if (DiscJockeyConfig.LocalConfig.LoadDownloadedSongsFromCacheAtLaunch)
         {
             DiscJockeyPlugin.LogInfo(
-                "DiscJockeyAudioManager<Init>: Config value [LoadDownloadedSongsFromCacheAtLaunch] is TRUE. Loading cached songs.");
+                "Config value [LoadDownloadedSongsFromCacheAtLaunch] is TRUE. Loading cached songs.");
            AudioLoader.LoadAllFromCache();
         }
     }
@@ -60,7 +60,7 @@ public static class AudioManager
     private static void SearchAndLoadOtherPluginSongs()
     {
         DiscJockeyPlugin.LogInfo(
-            "DiscJockeyAudioManager<SearchAndLoadOtherPluginSongs>: Scanning for other plugins using Custom Songs...");
+            "Scanning for other plugins using Custom Songs...");
         var otherPluginDirectories = Directory.GetDirectories(Paths.PluginPath)
             .Where(dir => !dir.EndsWith(DiscJockeyPlugin.PluginFolderName));
         foreach (var directory in otherPluginDirectories)
@@ -69,7 +69,7 @@ public static class AudioManager
             if (Directory.Exists(customSongPath))
             {
                 DiscJockeyPlugin.LogInfo(
-                    $"DiscJockeyAudioManager<SearchAndLoadOtherPluginSongs>: Loading {customSongPath}");
+                    $"Loading {customSongPath}");
                 AudioLoader.LoadAudioClipsFromDirectory(customSongPath);
             }
         }
@@ -79,17 +79,17 @@ public static class AudioManager
     {
         AudioLoader.OnLoadAudioStarted += filePath =>
         {
-            DiscJockeyPlugin.LogInfo($"DiscJockeyAudioManager<OnLoadAudioFromDiskStarted>: Loading {filePath}");
+            DiscJockeyPlugin.LogInfo($"OnLoadAudioStarted: Loading {filePath}");
         };
 
         AudioLoader.OnLoadAudioError += error =>
         {
-            DiscJockeyPlugin.LogError($"DiscJockeyAudioManager<OnLoadAudioFromDiskError>: {error}");
+            DiscJockeyPlugin.LogError($"OnLoadAudioError: {error}");
         };
 
         AudioLoader.OnLoadAudioCompleted += audio =>
         {
-            DiscJockeyPlugin.LogInfo($"DiscJockeyAudioManager<OnLoadAudioFromDiskCompleted>: Loaded {audio.Name}");
+            DiscJockeyPlugin.LogInfo($"OnLoadAudioCompleted: {audio.Name}");
             var track = TrackList.Add(audio);
             OnTrackAddedToTrackList?.Invoke(track);
         };
@@ -97,18 +97,18 @@ public static class AudioManager
         AudioLoader.OnLoadAllAudioFromDirectoryCompleted += () =>
         {
             DiscJockeyPlugin.LogInfo(
-                "DiscJockeyAudioManager<OnLoadAllAudioFromDirectoryCompleted>: : All clips loaded");
+                "OnLoadAllAudioFromDirectoryCompleted: All clips loaded");
             _hasFinishedLoading = true;
         };
 
         AudioLoader.OnLoadAllAudioFromDirectoryError += error =>
         {
-            DiscJockeyPlugin.LogError($"DiscJockeyAudioManager<OnLoadAllAudioFromDirectoryError>: {error}");
+            DiscJockeyPlugin.LogError($"OnLoadAllAudioFromDirectoryError: {error}");
         };
 
         AudioLoader.OnAudioDownloadWarning += (_, warning) =>
         {
-            DiscJockeyPlugin.LogWarning($"DiscJockeyAudioManager<OnAudioDownloadWarning>: {warning}");
+            DiscJockeyPlugin.LogWarning($"OnAudioDownloadWarning: {warning}");
         };
     }
 
@@ -131,7 +131,7 @@ public static class AudioManager
 
     public static void RequestStopTrack()
     {
-        BoomboxManager.LookedAtOrHeldBoombox.StopStreamAndPlaybackAndNotify();
+        BoomboxManager.LookedAtOrHeldBoombox.StopStreamAndNotify();
     }
 
     public static void RequestVolumeChange(float volume, bool sourceIsSlider = false)
@@ -149,8 +149,7 @@ public static class AudioManager
 
     public static void DownloadContent(string url)
     {
-        DiscJockeyPlugin.LogInfo(
-            $"DiscJockeyAudioManager<DownloadContent>: Download requested for {url}");
+        DiscJockeyPlugin.LogInfo($"Download requested for {url}");
         AudioLoader.DownloadContent(url);
     }
 

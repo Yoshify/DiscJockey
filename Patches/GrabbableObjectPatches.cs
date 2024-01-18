@@ -35,7 +35,6 @@ internal class GrabbableObjectPatches
     {
         if (__instance is BoomboxItem && __instance.IsOwner && BoomboxManager.IsLookingAtOrHoldingBoombox)
         {
-            
             BoomboxManager.OnDroppedOrPocketedBoombox();
         }
     }
